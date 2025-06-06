@@ -846,6 +846,12 @@ class HomeTriviaCard extends HTMLElement {
           gap: 20px;
           margin-bottom: 20px;
         }
+        @media (max-width: 600px) {
+          .score-section {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+        }
         .highscore-panel {
           border: 2px solid var(--primary-color);
           border-radius: 8px;
