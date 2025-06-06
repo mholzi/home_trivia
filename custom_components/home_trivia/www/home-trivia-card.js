@@ -416,7 +416,17 @@ class HomeTriviaCard extends HTMLElement {
     });
 
     this.shadowRoot.getElementById('team-count-select')?.addEventListener('change', (e) => {
-      this.updateTeamSetup(parseInt(e.target.value));
+      const teamCount = parseInt(e.target.value);
+      
+      // Persist team count immediately
+      this.debouncedServiceCall('team_count', () => {
+        this._hass.callService('home_trivia', 'update_team_count', {
+          team_count: teamCount
+        });
+      }, 100);
+      
+      // Update team setup display immediately
+      this.updateTeamSetup(teamCount);
     });
   }
 
@@ -429,6 +439,7 @@ class HomeTriviaCard extends HTMLElement {
     
     const currentDifficulty = gameStatus?.attributes?.difficulty_level || 'Easy';
     const currentTimerLength = timerSensor?.state || '30';
+    const currentTeamCount = gameStatus?.attributes?.team_count || 2;
 
     // Difficulty Level Input
     inputsHtml += `
@@ -477,11 +488,11 @@ class HomeTriviaCard extends HTMLElement {
         </div>
         <p class="input-description">How many teams will participate in the game?</p>
         <select class="form-select" id="team-count-select">
-          <option value="1">1 Team</option>
-          <option value="2" selected>2 Teams</option>
-          <option value="3">3 Teams</option>
-          <option value="4">4 Teams</option>
-          <option value="5">5 Teams</option>
+          <option value="1" ${currentTeamCount === 1 ? 'selected' : ''}>1 Team</option>
+          <option value="2" ${currentTeamCount === 2 ? 'selected' : ''}>2 Teams</option>
+          <option value="3" ${currentTeamCount === 3 ? 'selected' : ''}>3 Teams</option>
+          <option value="4" ${currentTeamCount === 4 ? 'selected' : ''}>4 Teams</option>
+          <option value="5" ${currentTeamCount === 5 ? 'selected' : ''}>5 Teams</option>
         </select>
       </div>
     `;
@@ -491,12 +502,8 @@ class HomeTriviaCard extends HTMLElement {
     const users = this.homeAssistantUsers || [];
     const isLoadingUsers = this._isLoadingUsers || (!this.usersLoaded && users.length === 0);
     
-    // Determine team count - check if team count select exists and get its value, otherwise default to 2
-    let teamCount = 2; // default
-    const existingTeamCountSelect = this.shadowRoot?.getElementById('team-count-select');
-    if (existingTeamCountSelect) {
-      teamCount = parseInt(existingTeamCountSelect.value) || 2;
-    }
+    // Use team count from Home Assistant entity instead of DOM state
+    const teamCount = currentTeamCount;
     
     inputsHtml += `
       <div class="splash-input-section">
@@ -700,7 +707,7 @@ class HomeTriviaCard extends HTMLElement {
       `).join('');
     }
     
-    // Update team participation status
+    // Update team participation status for all teams
     for (let i = 1; i <= 5; i++) {
       const participating = i <= teamCount;
       this.debouncedServiceCall(`teamParticipation_${i}`, () => {
@@ -715,7 +722,10 @@ class HomeTriviaCard extends HTMLElement {
   async startGame() {
     const difficulty = this.shadowRoot.getElementById('difficulty-select')?.value || 'Easy';
     const timerLength = parseInt(this.shadowRoot.getElementById('timer-select')?.value || '30');
-    const teamCount = parseInt(this.shadowRoot.getElementById('team-count-select')?.value || '2');
+    
+    // Get team count from Home Assistant entity instead of DOM
+    const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
+    const teamCount = gameStatus?.attributes?.team_count || 2;
 
     // Update game settings using debounced calls
     this.debouncedServiceCall('startGame_difficulty', () => {
@@ -730,11 +740,7 @@ class HomeTriviaCard extends HTMLElement {
       });
     }, 150);
 
-    this.debouncedServiceCall('startGame_teamCount', () => {
-      this._hass.callService('home_trivia', 'update_team_count', {
-        team_count: teamCount
-      });
-    }, 200);
+    // Note: No need to update team count as it's already persisted when changed
 
     // Update team names with debounced calls
     const teams = this.getTeams();
