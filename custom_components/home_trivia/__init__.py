@@ -67,6 +67,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register all game services (after entities are created)
     await _register_services(hass)
     
+    # Sync persistent settings to other sensors after a short delay
+    async def _sync_persistent_settings():
+        """Sync persistent settings from main sensor to other sensors."""
+        try:
+            entities = hass.data.get(DOMAIN, {}).get("entities", {})
+            main_sensor = entities.get("main_sensor")
+            timer_sensor = entities.get("countdown_sensor")
+            
+            if main_sensor and timer_sensor:
+                # Sync timer length from main sensor to timer sensor
+                if hasattr(main_sensor, '_timer_length') and hasattr(timer_sensor, 'update_timer_length'):
+                    timer_sensor.update_timer_length(main_sensor._timer_length)
+                    _LOGGER.debug("Synced timer length from main sensor: %d", main_sensor._timer_length)
+        except Exception as e:
+            _LOGGER.warning("Could not sync persistent settings: %s", e)
+    
+    # Schedule settings sync after entities are fully loaded
+    hass.async_create_task(_sync_persistent_settings())
+    
     return True
 
 async def _register_services(hass: HomeAssistant) -> None:
@@ -433,6 +452,21 @@ async def _register_services(hass: HomeAssistant) -> None:
             timer_sensor.update_timer_length(int(length))
         else:
             hass.states.async_set("sensor.home_trivia_countdown_timer", int(length))
+        
+        # Also persist timer length in main sensor for settings persistence
+        main_sensor = entities.get("main_sensor")
+        if main_sensor and hasattr(main_sensor, 'set_timer_length'):
+            main_sensor.set_timer_length(int(length))
+        else:
+            # Update the game status entity with timer_length attribute
+            state_obj = hass.states.get("sensor.home_trivia_game_status")
+            if state_obj:
+                attrs = dict(state_obj.attributes) if state_obj.attributes else {}
+                attrs["timer_length"] = int(length)
+                hass.states.async_set("sensor.home_trivia_game_status", state_obj.state, attrs)
+            else:
+                # Create the entity if it doesn't exist
+                hass.states.async_set("sensor.home_trivia_game_status", "ready", {"timer_length": int(length)})
 
     async def update_team_count(call):
         team_count = call.data.get("team_count")
