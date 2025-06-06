@@ -719,6 +719,47 @@ class HomeTriviaCard extends HTMLElement {
     }
   }
 
+  updateMainTeamSetup(teamCount) {
+    // Update the main game team management section to show the correct number of teams
+    // This uses the same logic as updateTeamSetup() from splash screen
+    const mainTeamsContainer = this.shadowRoot.querySelector('.main-teams-container');
+    if (mainTeamsContainer) {
+      const teams = this.getTeams();
+      const users = this.homeAssistantUsers || [];
+      const isLoadingUsers = this._isLoadingUsers || (!this.usersLoaded && users.length === 0);
+      
+      mainTeamsContainer.innerHTML = Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => `
+        <div class="main-team-item">
+          <label class="team-label">Team ${teamId.split('_')[1]}:</label>
+          <input type="text" class="main-team-input" id="main-team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
+                 value="${this.escapeHtml(team.name)}" 
+                 oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
+          <select class="main-team-select" 
+                  onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
+                  ${isLoadingUsers ? 'disabled' : ''}>
+            <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
+            ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
+              `<option value="${this.escapeHtml(user.id)}" ${team.user_id === user.id ? 'selected' : ''}>
+                ${this.escapeHtml(user.name)}
+              </option>`
+            ).join('')}
+          </select>
+        </div>
+      `).join('');
+    }
+    
+    // Update team participation status for all teams (same logic as splash screen)
+    for (let i = 1; i <= 5; i++) {
+      const participating = i <= teamCount;
+      this.debouncedServiceCall(`mainTeamParticipation_${i}`, () => {
+        this._hass.callService('home_trivia', 'update_team_participating', {
+          team_id: `team_${i}`,
+          participating: participating
+        });
+      }, 100 + (i * 50));
+    }
+  }
+
   async startGame() {
     const difficulty = this.shadowRoot.getElementById('difficulty-select')?.value || 'Easy';
     const timerLength = parseInt(this.shadowRoot.getElementById('timer-select')?.value || '30');
@@ -913,6 +954,110 @@ class HomeTriviaCard extends HTMLElement {
           margin-bottom: 10px;
           color: var(--primary-text-color);
         }
+        .team-management-section {
+          border: 1px solid var(--divider-color);
+          border-radius: 8px;
+          margin-bottom: 20px;
+          overflow: hidden;
+        }
+        .section-header {
+          background: var(--secondary-background-color, #f5f5f5);
+          padding: 15px;
+          cursor: pointer;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          transition: background-color 0.2s;
+        }
+        .section-header:hover {
+          background: var(--divider-color, #e0e0e0);
+        }
+        .section-header h3 {
+          margin: 0;
+          color: var(--primary-text-color);
+          font-size: 1.1em;
+        }
+        .expand-icon {
+          font-size: 1.2em;
+          color: var(--primary-color);
+          transition: transform 0.2s;
+        }
+        .team-management-content {
+          padding: 20px;
+          background: var(--card-background-color, white);
+        }
+        .team-count-section, .team-setup-section {
+          margin-bottom: 20px;
+        }
+        .management-input-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .management-input-header h4 {
+          margin: 0 0 0 8px;
+          font-size: 1em;
+          font-weight: 600;
+          color: var(--primary-text-color);
+        }
+        .management-input-header .input-icon {
+          --mdc-icon-size: 18px;
+          color: var(--primary-color);
+        }
+        .input-description {
+          margin: 0 0 12px 0;
+          opacity: 0.7;
+          font-size: 0.9em;
+          color: var(--secondary-text-color);
+        }
+        .form-select, .main-team-input, .main-team-select {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid var(--divider-color);
+          border-radius: 6px;
+          background: var(--card-background-color, white);
+          color: var(--primary-text-color);
+          font-size: 14px;
+          box-sizing: border-box;
+          transition: all 0.2s ease;
+        }
+        .form-select:focus, .main-team-input:focus, .main-team-select:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 2px rgba(var(--rgb-primary-color), 0.2);
+        }
+        .main-teams-container {
+          display: grid;
+          gap: 12px;
+        }
+        .main-team-item {
+          display: grid;
+          grid-template-columns: auto 1fr 1fr;
+          gap: 12px;
+          align-items: center;
+          background: var(--secondary-background-color, #f5f5f5);
+          padding: 12px;
+          border-radius: 6px;
+          border: 1px solid var(--divider-color);
+        }
+        .main-team-item:hover {
+          background: var(--divider-color, #e0e0e0);
+        }
+        .main-team-item .team-label {
+          font-weight: 600;
+          white-space: nowrap;
+          color: var(--primary-text-color);
+        }
+        @media (max-width: 768px) {
+          .main-team-item {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 8px;
+          }
+          .main-team-item .team-label {
+            text-align: center;
+          }
+        }
       </style>
       
       <div class="game-container">
@@ -924,10 +1069,31 @@ class HomeTriviaCard extends HTMLElement {
         <div class="game-content">
           ${this.renderQuestionSection(currentQuestion, countdown)}
           ${this.renderTeamsSection()}
+          ${this.renderTeamManagement()}
           ${this.renderGameControls(gameStatus)}
         </div>
       </div>
     `;
+    
+    // Add event listeners for team management
+    setTimeout(() => {
+      const teamCountSelect = this.shadowRoot.getElementById('main-team-count-select');
+      if (teamCountSelect) {
+        teamCountSelect.addEventListener('change', (e) => {
+          const teamCount = parseInt(e.target.value);
+          
+          // Persist team count immediately (same logic as splash screen)
+          this.debouncedServiceCall('main_team_count', () => {
+            this._hass.callService('home_trivia', 'update_team_count', {
+              team_count: teamCount
+            });
+          }, 100);
+          
+          // Update team setup display immediately (same logic as splash screen)
+          this.updateMainTeamSetup(teamCount);
+        });
+      }
+    }, 0);
   }
 
   renderQuestionSection(currentQuestion, countdown) {
@@ -1010,6 +1176,82 @@ class HomeTriviaCard extends HTMLElement {
     
     html += '</div>';
     return html;
+  }
+
+  renderTeamManagement() {
+    const isExpanded = this.teamManagementExpanded;
+    
+    return `
+      <div class="team-management-section">
+        <div class="section-header" onclick="this.getRootNode().host.toggleTeamManagement()">
+          <h3>🛠️ Team Management</h3>
+          <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
+        </div>
+        ${isExpanded ? this.renderTeamManagementContent() : ''}
+      </div>
+    `;
+  }
+
+  renderTeamManagementContent() {
+    // Get current values from Home Assistant entities (same logic as splash screen)
+    const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
+    const currentTeamCount = gameStatus?.attributes?.team_count || 2;
+    
+    const teams = this.getTeams();
+    const users = this.homeAssistantUsers || [];
+    const isLoadingUsers = this._isLoadingUsers || (!this.usersLoaded && users.length === 0);
+    
+    return `
+      <div class="team-management-content">
+        <div class="team-count-section">
+          <div class="management-input-header">
+            <ha-icon icon="mdi:account-group" class="input-icon"></ha-icon>
+            <h4>Number of Teams</h4>
+          </div>
+          <p class="input-description">How many teams will participate in the game?</p>
+          <select class="form-select" id="main-team-count-select">
+            <option value="1" ${currentTeamCount === 1 ? 'selected' : ''}>1 Team</option>
+            <option value="2" ${currentTeamCount === 2 ? 'selected' : ''}>2 Teams</option>
+            <option value="3" ${currentTeamCount === 3 ? 'selected' : ''}>3 Teams</option>
+            <option value="4" ${currentTeamCount === 4 ? 'selected' : ''}>4 Teams</option>
+            <option value="5" ${currentTeamCount === 5 ? 'selected' : ''}>5 Teams</option>
+          </select>
+        </div>
+        
+        <div class="team-setup-section">
+          <div class="management-input-header">
+            <ha-icon icon="mdi:account-group-outline" class="input-icon"></ha-icon>
+            <h4>Team Setup</h4>
+          </div>
+          <p class="input-description">Assign names and users to your teams</p>
+          <div class="main-teams-container">
+            ${Object.entries(teams).slice(0, currentTeamCount).map(([teamId, team]) => `
+              <div class="main-team-item">
+                <label class="team-label">Team ${teamId.split('_')[1]}:</label>
+                <input type="text" class="main-team-input" id="main-team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
+                       value="${this.escapeHtml(team.name)}" 
+                       oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
+                <select class="main-team-select" 
+                        onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
+                        ${isLoadingUsers ? 'disabled' : ''}>
+                  <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
+                  ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
+                    `<option value="${this.escapeHtml(user.id)}" ${team.user_id === user.id ? 'selected' : ''}>
+                      ${this.escapeHtml(user.name)}
+                    </option>`
+                  ).join('')}
+                </select>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  toggleTeamManagement() {
+    this.teamManagementExpanded = !this.teamManagementExpanded;
+    this.requestUpdate();
   }
 
   renderGameControls(gameStatus) {
