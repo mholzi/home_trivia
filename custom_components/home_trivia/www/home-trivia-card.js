@@ -1025,8 +1025,8 @@ class HomeTriviaCard extends HTMLElement {
             ⏹️ Stop Game
           </button>
         ` : `
-          <button class="control-button secondary-button" onclick="this.getRootNode().host.startGame()">
-            🚀 Start Game
+          <button class="control-button secondary-button" onclick="this.getRootNode().host.startNewGame()">
+            🚀 Start New Game
           </button>
         `}
         <button class="control-button secondary-button" onclick="this.getRootNode().host.resetGame()">
@@ -1052,6 +1052,13 @@ class HomeTriviaCard extends HTMLElement {
 
   async resetGame() {
     await this._hass.callService('home_trivia', 'reset_game', {});
+  }
+
+  async startNewGame() {
+    // Reset the game first to restore default team names, which will trigger the splash screen
+    await this.resetGame();
+    // The splash screen will appear automatically on the next render cycle
+    // because resetGame() will restore default team names, making shouldShowSplashScreen() return true
   }
 
   getCardSize() {
