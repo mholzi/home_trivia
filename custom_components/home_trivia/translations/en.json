@@ -2,18 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "Home Trivia Setup",
-        "description": "Configure your Home Trivia game settings.",
-        "data": {
-          "difficulty_level": "Difficulty Level",
-          "team_count": "Number of Teams",
-          "timer_length": "Timer Length (seconds)"
-        },
-        "data_description": {
-          "difficulty_level": "Choose the difficulty level for trivia questions:\n\n{difficulty_descriptions}",
-          "team_count": "How many teams will participate in the game?",
-          "timer_length": "How long should each question timer last?"
-        }
+        "title": "Add Home Trivia",
+        "description": "Add the Home Trivia integration to your Home Assistant. All game settings will be configured through the game interface."
       }
     },
     "abort": {
@@ -24,11 +14,7 @@
     "step": {
       "init": {
         "title": "Home Trivia Options",
-        "data": {
-          "difficulty_level": "Difficulty Level",
-          "team_count": "Number of Teams",
-          "timer_length": "Timer Length (seconds)"
-        }
+        "description": "All game settings are configured through the game interface. No additional options are available here."
       }
     }
   }
