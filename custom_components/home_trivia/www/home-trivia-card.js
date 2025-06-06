@@ -840,6 +840,68 @@ class HomeTriviaCard extends HTMLElement {
           color: var(--primary-color);
           margin-bottom: 20px;
         }
+        .score-section {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        .highscore-panel {
+          border: 2px solid var(--primary-color);
+          border-radius: 8px;
+          padding: 15px;
+          background: var(--card-background-color, white);
+        }
+        .team-scores-panel {
+          border: 1px solid var(--divider-color);
+          border-radius: 8px;
+          padding: 15px;
+          background: var(--card-background-color, white);
+        }
+        .panel-title {
+          font-weight: bold;
+          font-size: 1.2em;
+          margin-bottom: 10px;
+          color: var(--primary-text-color);
+          text-align: center;
+        }
+        .highscore-content {
+          text-align: center;
+        }
+        .highscore-team {
+          font-size: 1.1em;
+          font-weight: bold;
+          color: var(--primary-color);
+          margin-bottom: 5px;
+        }
+        .highscore-average {
+          font-size: 1.4em;
+          font-weight: bold;
+          color: var(--success-color, green);
+          margin-bottom: 5px;
+        }
+        .highscore-details {
+          font-size: 0.9em;
+          color: var(--secondary-text-color);
+        }
+        .team-score-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 0;
+          border-bottom: 1px solid var(--divider-color);
+        }
+        .team-score-item:last-child {
+          border-bottom: none;
+        }
+        .team-score-name {
+          font-weight: bold;
+          color: var(--primary-text-color);
+        }
+        .team-score-average {
+          font-weight: bold;
+          color: var(--primary-color);
+        }
         .teams-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -923,7 +985,7 @@ class HomeTriviaCard extends HTMLElement {
         
         <div class="game-content">
           ${this.renderQuestionSection(currentQuestion, countdown)}
-          ${this.renderTeamsSection()}
+          ${this.renderScoreSection()}
           ${this.renderGameControls(gameStatus)}
         </div>
       </div>
@@ -986,8 +1048,77 @@ class HomeTriviaCard extends HTMLElement {
     return html;
   }
 
+  renderScoreSection() {
+    const highscoreSensor = this._hass.states['sensor.home_trivia_highscore'];
+    const roundCounter = this._hass.states['sensor.home_trivia_round_counter'];
+    
+    const currentRound = roundCounter ? parseInt(roundCounter.state) : 0;
+    
+    // Left side: Global Highscore (always visible)
+    let highscoreHtml = '<div class="highscore-content">';
+    if (highscoreSensor && highscoreSensor.attributes.team_name !== "No Team") {
+      highscoreHtml += `
+        <div class="highscore-team">🏆 ${highscoreSensor.attributes.team_name}</div>
+        <div class="highscore-average">${highscoreSensor.attributes.average_points.toFixed(1)} pts/round</div>
+        <div class="highscore-details">${highscoreSensor.attributes.total_points} pts in ${highscoreSensor.attributes.total_rounds} rounds</div>
+      `;
+    } else {
+      highscoreHtml += `
+        <div class="highscore-team">🏆 No Record Yet</div>
+        <div class="highscore-average">0.0 pts/round</div>
+        <div class="highscore-details">Play a round to set the first record!</div>
+      `;
+    }
+    highscoreHtml += '</div>';
+    
+    // Right side: Team averages (only after round 1)
+    let teamScoresHtml = '';
+    if (currentRound > 0) {
+      teamScoresHtml += '<div class="team-scores-content">';
+      
+      for (let i = 1; i <= 5; i++) {
+        const team = this._hass.states[`sensor.home_trivia_team_${i}`];
+        if (!team || !team.attributes.participating) continue;
+        
+        const points = team.attributes.points || 0;
+        const average = currentRound > 0 ? (points / currentRound).toFixed(1) : '0.0';
+        
+        teamScoresHtml += `
+          <div class="team-score-item">
+            <span class="team-score-name">${team.state}</span>
+            <span class="team-score-average">${average} pts/round</span>
+          </div>
+        `;
+      }
+      
+      teamScoresHtml += '</div>';
+    } else {
+      teamScoresHtml += `
+        <div class="team-scores-content" style="text-align: center; color: var(--secondary-text-color);">
+          Team averages will appear after the first round
+        </div>
+      `;
+    }
+    
+    return `
+      <div class="score-section">
+        <div class="highscore-panel">
+          <div class="panel-title">🏆 All-Time Highscore</div>
+          ${highscoreHtml}
+        </div>
+        <div class="team-scores-panel">
+          <div class="panel-title">📊 Current Game Averages</div>
+          ${teamScoresHtml}
+        </div>
+      </div>
+      <div class="teams-grid">
+        ${this.renderTeamsSection()}
+      </div>
+    `;
+  }
+
   renderTeamsSection() {
-    let html = '<div class="teams-grid">';
+    let html = '';
     
     for (let i = 1; i <= 5; i++) {
       const team = this._hass.states[`sensor.home_trivia_team_${i}`];
@@ -1008,7 +1139,6 @@ class HomeTriviaCard extends HTMLElement {
       `;
     }
     
-    html += '</div>';
     return html;
   }
 
@@ -1037,12 +1167,74 @@ class HomeTriviaCard extends HTMLElement {
   }
 
   async selectAnswer(answer) {
-    // This would typically be called from team-specific UI
-    // For now, we'll just show it works
-    console.log('Answer selected:', answer);
+    // This method would typically be called from team-specific UI
+    // For now, just mark all participating teams as having selected this answer
+    // In a real implementation, this would be per-team
+    
+    const currentQuestion = this._hass.states['sensor.home_trivia_current_question'];
+    const countdown = this._hass.states['sensor.home_trivia_countdown_current'];
+    
+    if (!currentQuestion || !currentQuestion.attributes.question) {
+      console.log('No active question');
+      return;
+    }
+    
+    const correctAnswer = currentQuestion.attributes.correct_answer;
+    const isCorrect = answer === correctAnswer;
+    const timeLeft = countdown ? parseInt(countdown.state) : 0;
+    
+    // Calculate points: 10 base points + time bonus if correct
+    const basePoints = 10;
+    const timeBonus = isCorrect ? timeLeft : 0;
+    const totalPoints = basePoints + timeBonus;
+    
+    // For now, award points to the first participating team that hasn't answered
+    // In a real implementation, this would be team-specific
+    for (let i = 1; i <= 5; i++) {
+      const team = this._hass.states[`sensor.home_trivia_team_${i}`];
+      if (!team || !team.attributes.participating || team.attributes.answered) continue;
+      
+      // Mark team as answered
+      await this._hass.callService('home_trivia', 'update_team_answer', {
+        team_id: `team_${i}`,
+        answer: answer
+      });
+      
+      // Award points if correct
+      if (isCorrect) {
+        await this._hass.callService('home_trivia', 'award_points', {
+          team_id: `team_${i}`,
+          points: totalPoints
+        });
+        
+        console.log(`Team ${i} answered correctly! Awarded ${totalPoints} points (${basePoints} base + ${timeBonus} time bonus)`);
+      } else {
+        console.log(`Team ${i} answered incorrectly.`);
+      }
+      
+      break; // Only handle the first team for now
+    }
   }
 
   async nextQuestion() {
+    // Complete the current round first (if there was a question)
+    const currentQuestion = this._hass.states['sensor.home_trivia_current_question'];
+    if (currentQuestion && currentQuestion.attributes.question) {
+      await this._hass.callService('home_trivia', 'complete_round', {});
+      
+      // Reset team answers for the next question
+      for (let i = 1; i <= 5; i++) {
+        const team = this._hass.states[`sensor.home_trivia_team_${i}`];
+        if (team && team.attributes.participating) {
+          await this._hass.callService('home_trivia', 'update_team_answer', {
+            team_id: `team_${i}`,
+            answer: null
+          });
+        }
+      }
+    }
+    
+    // Move to the next question
     await this._hass.callService('home_trivia', 'next_question', {});
   }
 

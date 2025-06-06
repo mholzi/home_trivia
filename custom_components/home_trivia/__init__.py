@@ -498,8 +498,8 @@ async def _register_services(hass: HomeAssistant) -> None:
     async def update_team_answer(call):
         team_id = call.data.get("team_id")
         answer = call.data.get("answer")
-        if not team_id or not answer:
-            _LOGGER.error("Missing team_id or answer")
+        if not team_id:
+            _LOGGER.error("Missing team_id")
             return
         
         # Extract team number from team_id (e.g., "team_1" -> "1")
@@ -514,7 +514,7 @@ async def _register_services(hass: HomeAssistant) -> None:
         if team_sensor and hasattr(team_sensor, 'update_team_answer'):
             _LOGGER.debug("Updating team %s answer to %s via entity method", team_number, answer)
             team_sensor.update_team_answer(answer)
-            team_sensor.update_team_answered(True)
+            team_sensor.update_team_answered(answer is not None)
         else:
             # Fallback to direct state setting
             _LOGGER.warning("Could not find team sensor entity %s, using fallback", unique_id)
@@ -523,7 +523,7 @@ async def _register_services(hass: HomeAssistant) -> None:
             if state_obj:
                 attrs = dict(state_obj.attributes) if state_obj.attributes else {}
                 attrs["answer"] = answer
-                attrs["answered"] = True
+                attrs["answered"] = answer is not None
                 hass.states.async_set(entity_id, state_obj.state, attrs)
 
     async def update_difficulty_level(call):
@@ -576,6 +576,75 @@ async def _register_services(hass: HomeAssistant) -> None:
                 attrs["user_id"] = user_id
                 hass.states.async_set(entity_id, state_obj.state, attrs)
 
+    async def award_points(call):
+        team_id = call.data.get("team_id")
+        points = call.data.get("points")
+        if not team_id or points is None:
+            _LOGGER.error("Missing team_id or points")
+            return
+        
+        # Extract team number from team_id (e.g., "team_1" -> "1")
+        team_number = team_id.split('_')[-1]
+        unique_id = f"home_trivia_team_{team_number}"
+        
+        # Find the team sensor entity and add points
+        entities = _get_entities()
+        team_sensors = entities.get("team_sensors", {})
+        team_sensor = team_sensors.get(unique_id)
+        
+        if team_sensor and hasattr(team_sensor, 'add_points'):
+            _LOGGER.info("Awarding %d points to team %s", points, team_number)
+            team_sensor.add_points(int(points))
+        else:
+            # Fallback to direct state setting
+            _LOGGER.warning("Could not find team sensor entity %s, using fallback", unique_id)
+            entity_id = f"sensor.home_trivia_team_{team_number}"
+            state_obj = hass.states.get(entity_id)
+            if state_obj:
+                attrs = dict(state_obj.attributes) if state_obj.attributes else {}
+                current_points = attrs.get("points", 0)
+                new_points = current_points + int(points)
+                attrs["points"] = new_points
+                hass.states.async_set(entity_id, state_obj.state, attrs)
+
+    async def complete_round(call):
+        """Complete the current round and update highscores."""
+        _LOGGER.info("Completing round and updating highscores")
+        
+        entities = _get_entities()
+        
+        # Increment round counter
+        round_counter_sensor = entities.get("round_counter_sensor")
+        if round_counter_sensor and hasattr(round_counter_sensor, 'increment_round'):
+            round_counter_sensor.increment_round()
+        else:
+            # Fallback to direct state setting
+            state_obj = hass.states.get("sensor.home_trivia_round_counter")
+            current_round = int(state_obj.state) if state_obj else 0
+            hass.states.async_set("sensor.home_trivia_round_counter", current_round + 1)
+        
+        # Get the current round number
+        round_counter = hass.states.get("sensor.home_trivia_round_counter")
+        current_round = int(round_counter.state) if round_counter else 1
+        
+        # Update highscore for each participating team
+        highscore_sensor = entities.get("highscore_sensor")
+        team_sensors = entities.get("team_sensors", {})
+        
+        for i in range(1, 6):
+            team_key = f"home_trivia_team_{i}"
+            team_sensor = team_sensors.get(team_key)
+            
+            if team_sensor and hasattr(team_sensor, '_participating') and team_sensor._participating:
+                team_name = team_sensor.state if hasattr(team_sensor, 'state') else f"Team {i}"
+                total_points = team_sensor._points if hasattr(team_sensor, '_points') else 0
+                
+                if highscore_sensor and hasattr(highscore_sensor, 'update_highscore'):
+                    highscore_sensor.update_highscore(team_name, total_points, current_round)
+                
+                _LOGGER.debug("Updated highscore for %s: %d points in %d rounds", 
+                            team_name, total_points, current_round)
+
     # Register all services under the "home_trivia" domain
     hass.services.async_register(DOMAIN, "start_game", start_game)
     hass.services.async_register(DOMAIN, "stop_game", stop_game)
@@ -589,6 +658,8 @@ async def _register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, "update_team_user_id", update_team_user_id)
     hass.services.async_register(DOMAIN, "update_countdown_timer_length", update_countdown_timer_length)
     hass.services.async_register(DOMAIN, "update_team_count", update_team_count)
+    hass.services.async_register(DOMAIN, "award_points", award_points)
+    hass.services.async_register(DOMAIN, "complete_round", complete_round)
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry and remove services if no entries remain."""
@@ -611,6 +682,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 "update_team_user_id",
                 "update_countdown_timer_length",
                 "update_team_count",
+                "award_points",
+                "complete_round",
             ]:
                 hass.services.async_remove(DOMAIN, svc)
     return unload_ok

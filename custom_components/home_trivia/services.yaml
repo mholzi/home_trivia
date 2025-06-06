@@ -164,3 +164,29 @@ update_team_user_id:
       example: "1234567890123456789abcdef123456"
       selector:
         text:
+
+award_points:
+  name: Award Points
+  description: Award points to a team for correct answers and update highscore
+  fields:
+    team_id:
+      name: Team ID
+      description: The team identifier (team_1, team_2, team_3, team_4, or team_5)
+      required: true
+      example: "team_1"
+      selector:
+        text:
+    points:
+      name: Points
+      description: The points to award for this answer
+      required: true
+      example: 25
+      selector:
+        number:
+          min: 0
+          max: 100
+
+complete_round:
+  name: Complete Round
+  description: Mark the current round as complete and update highscores
+  fields: {}
