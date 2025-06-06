@@ -18,6 +18,13 @@ class HomeTriviaCard extends HTMLElement {
     this._isLoadingUsers = false;
   }
 
+  // HTML escape utility for security
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   setConfig(config) {
     if (!config) {
       throw new Error('Invalid configuration');
@@ -437,16 +444,16 @@ class HomeTriviaCard extends HTMLElement {
           ${Object.entries(teams).slice(0, 2).map(([teamId, team]) => `
             <div class="splash-team-item">
               <label class="team-label">Team ${teamId.split('_')[1]}:</label>
-              <input type="text" class="splash-team-input" placeholder="Team Name" 
-                     value="${team.name}" 
+              <input type="text" class="splash-team-input" id="team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
+                     value="${this.escapeHtml(team.name)}" 
                      oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
               <select class="splash-team-select" 
                       onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
                       ${isLoadingUsers ? 'disabled' : ''}>
                 <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
                 ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
-                  `<option value="${user.id}" ${team.user_id === user.id ? 'selected' : ''}>
-                    ${user.name}
+                  `<option value="${this.escapeHtml(user.id)}" ${team.user_id === user.id ? 'selected' : ''}>
+                    ${this.escapeHtml(user.name)}
                   </option>`
                 ).join('')}
               </select>
@@ -603,16 +610,16 @@ class HomeTriviaCard extends HTMLElement {
       splashTeamsContainer.innerHTML = Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => `
         <div class="splash-team-item">
           <label class="team-label">Team ${teamId.split('_')[1]}:</label>
-          <input type="text" class="splash-team-input" placeholder="Team Name" 
-                 value="${team.name}" 
+          <input type="text" class="splash-team-input" id="team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
+                 value="${this.escapeHtml(team.name)}" 
                  oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
           <select class="splash-team-select" 
                   onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
                   ${isLoadingUsers ? 'disabled' : ''}>
             <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
             ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
-              `<option value="${user.id}" ${team.user_id === user.id ? 'selected' : ''}>
-                ${user.name}
+              `<option value="${this.escapeHtml(user.id)}" ${team.user_id === user.id ? 'selected' : ''}>
+                ${this.escapeHtml(user.name)}
               </option>`
             ).join('')}
           </select>
