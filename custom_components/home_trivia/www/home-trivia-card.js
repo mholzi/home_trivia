@@ -317,22 +317,13 @@ class HomeTriviaCard extends HTMLElement {
         }
       </style>
 
-      <div class="splash-container">
-        <div class="splash-title">🎯 Home Trivia</div>
-        <div class="splash-subtitle">Set up your trivia game</div>
-        
-        <div class="form-group">
-          <label class="form-label">Difficulty Level</label>
-          <select class="form-select" id="difficulty-select">
-            <option value="Kids">🧒 Kids Level</option>
-            <option value="Easy" selected>🎓 Easy Level</option>
-            <option value="Medium">🏛️ Medium Level</option>
-            <option value="Hard">🧠 Hard Level</option>
-          </select>
-          <div class="difficulty-description" id="difficulty-description">
-            Great for testing what you learned in school with questions about geography, basic science, and history.
-          </div>
-
+      <div class="splash-screen">
+        <div class="splash-floating-notes">
+          <div class="note note-1">🎵</div>
+          <div class="note note-2">🎯</div>
+          <div class="note note-3">🧠</div>
+          <div class="note note-4">🏆</div>
+          <div class="note note-5">❓</div>
         </div>
         
         <div class="splash-header">
@@ -393,7 +384,7 @@ class HomeTriviaCard extends HTMLElement {
           <option value="Kids">🧒 Kids Level</option>
           <option value="Easy" selected>🎓 Easy Level</option>
           <option value="Medium">🏛️ Medium Level</option>
-          <option value="Difficult">🧠 Difficult Level</option>
+          <option value="Hard">🧠 Hard Level</option>
         </select>
         <div class="difficulty-description" id="difficulty-description" style="margin-top: 8px; opacity: 0.8; font-style: italic;">
           Great for testing what you learned in school with questions about geography, basic science, and history.
