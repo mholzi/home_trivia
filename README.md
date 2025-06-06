@@ -16,6 +16,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 ✅ **Multiple Difficulty Levels** - From kids to intellectuals, everyone can play  
 ✅ **Team Competition** - Support for up to 5 teams with custom names  
 ✅ **Smart Scoring** - Base points plus speed bonuses keep games exciting  
+✅ **Persistent Settings** - Your game preferences are automatically saved and restored  
 
 **Getting Started is Simple:**
 1. Install via HACS or manually
@@ -84,11 +85,13 @@ type: custom:home-trivia-card
 
 ## 🎯 How to Play
 
-1. **Setup**: Configure teams, difficulty, and timer in the splash screen
+1. **Setup**: Configure teams, difficulty, and timer in the splash screen *(settings automatically saved)*
 2. **Start Game**: Click "Start Trivia Game" to begin
 3. **Answer Questions**: Teams select A, B, or C for each question
 4. **Scoring**: Get 10 base points + speed bonus for correct answers
 5. **Fun Facts**: Learn something new after each question!
+
+**🔄 Settings Persistence**: Your game configuration (difficulty, team count, timer length) is automatically saved. Next time you open Home Trivia, your preferences will be exactly as you left them!
 
 ## 🎲 Game Logic
 
@@ -115,11 +118,22 @@ The game features 7 mandatory categories across all difficulty levels:
 
 ## 🔧 Configuration
 
-The integration supports configuration through the UI:
-- **Difficulty Level**: Choose question complexity
-- **Team Count**: 1-5 participating teams
-- **Timer Length**: 10-120 seconds per question
-- **Team Names**: Custom names for each team
+The integration supports configuration through the UI with **automatic persistent storage**:
+
+### 🔄 Persistent Settings (New in v1.0.0!)
+All game setup parameters are **automatically saved** and restored across Home Assistant restarts:
+- **Difficulty Level**: Choose question complexity - *setting is remembered*
+- **Team Count**: 1-5 participating teams - *setting is remembered*  
+- **Timer Length**: 10-120 seconds per question - *setting is remembered*
+- **Team Names**: Custom names for each team - *names are remembered*
+
+**No manual configuration required!** Simply set your preferences once on the splash screen, and they'll be automatically restored every time you use Home Trivia, even after Home Assistant restarts or reloads.
+
+### Configuration Options
+- **Difficulty Levels**: Kids, Easy, Medium, Hard
+- **Team Count**: 1 to 5 teams maximum
+- **Timer Range**: 10 to 120 seconds per question
+- **Team Customization**: Custom names and participation status
 
 ## 🎮 Services
 

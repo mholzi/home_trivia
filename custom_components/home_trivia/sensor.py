@@ -69,7 +69,7 @@ async def async_setup_entry(
     async_add_entities(entities, True)
 
 
-class HomeTriviaGameStatusSensor(SensorEntity):
+class HomeTriviaGameStatusSensor(SensorEntity, RestoreEntity):
     """Representation of a Home Trivia main game status sensor."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
@@ -79,11 +79,33 @@ class HomeTriviaGameStatusSensor(SensorEntity):
         self._attr_icon = "mdi:help-circle"
         self._state = "ready"
         
-        # Get configuration from config entry
-        config_data = config_entry.data
-        self._team_count = config_data.get("team_count", 2)
-        self._difficulty_level = config_data.get("difficulty_level", "Easy")
-        self._timer_length = config_data.get("timer_length", 30)
+        # Set default values - these will be overridden by restored state if available
+        self._team_count = 2
+        self._difficulty_level = "Easy"
+        self._timer_length = 30
+
+    async def async_added_to_hass(self) -> None:
+        """Called when entity is added to hass."""
+        await super().async_added_to_hass()
+        
+        # Restore previous state if available
+        if (last_state := await self.async_get_last_state()) is not None:
+            try:
+                # Restore the game state
+                self._state = last_state.state
+                _LOGGER.debug("Restored game state: %s", self._state)
+                
+                # Restore attributes if available
+                if last_state.attributes:
+                    self._team_count = int(last_state.attributes.get("team_count", 2))
+                    self._difficulty_level = last_state.attributes.get("difficulty_level", "Easy")
+                    self._timer_length = int(last_state.attributes.get("timer_length", 30))
+                    
+                    _LOGGER.info("Restored game settings - Team Count: %d, Difficulty: %s, Timer: %d", 
+                               self._team_count, self._difficulty_level, self._timer_length)
+                    
+            except (ValueError, TypeError) as e:
+                _LOGGER.warning("Could not restore game status state: %s", e)
 
     @property
     def state(self) -> str:
@@ -114,6 +136,11 @@ class HomeTriviaGameStatusSensor(SensorEntity):
     def set_difficulty_level(self, difficulty: str) -> None:
         """Set the difficulty level."""
         self._difficulty_level = difficulty
+        self.async_write_ha_state()
+
+    def set_timer_length(self, timer_length: int) -> None:
+        """Set the timer length."""
+        self._timer_length = timer_length
         self.async_write_ha_state()
 
     async def async_update(self) -> None:
