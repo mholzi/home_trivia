@@ -316,14 +316,23 @@ class HomeTriviaCard extends HTMLElement {
           }
         }
       </style>
-      
-      <div class="splash-screen">
-        <div class="splash-floating-notes">
-          <div class="note note-1">🎯</div>
-          <div class="note note-2">🧠</div>
-          <div class="note note-3">💡</div>
-          <div class="note note-4">❓</div>
-          <div class="note note-5">🏆</div>
+
+      <div class="splash-container">
+        <div class="splash-title">🎯 Home Trivia</div>
+        <div class="splash-subtitle">Set up your trivia game</div>
+        
+        <div class="form-group">
+          <label class="form-label">Difficulty Level</label>
+          <select class="form-select" id="difficulty-select">
+            <option value="Kids">🧒 Kids Level</option>
+            <option value="Easy" selected>🎓 Easy Level</option>
+            <option value="Medium">🏛️ Medium Level</option>
+            <option value="Hard">🧠 Hard Level</option>
+          </select>
+          <div class="difficulty-description" id="difficulty-description">
+            Great for testing what you learned in school with questions about geography, basic science, and history.
+          </div>
+
         </div>
         
         <div class="splash-header">
@@ -590,7 +599,7 @@ class HomeTriviaCard extends HTMLElement {
       'Kids': 'Perfect for curious minds around 10 years old! Fun questions about animals, colors, and basic facts.',
       'Easy': 'Great for testing what you learned in school with questions about geography, basic science, and history.',
       'Medium': 'University-level challenges! Dive deeper into literature, advanced science, and complex historical facts.',
-      'Difficult': 'For true intellectuals! Mind-bending questions about philosophy, advanced mathematics, and physics.'
+      'Hard': 'University-level knowledge! Mind-bending questions about advanced topics, philosophy, and specialized knowledge.'
     };
     
     const descElement = this.shadowRoot.getElementById('difficulty-description');

@@ -45,6 +45,27 @@ Welcome to the **Home Trivia** Home Assistant party game! This repository contai
 - Provide thorough unit and integration tests for both backend and frontend code.
 - Use Home Assistant's test tools for Python and appropriate frameworks for JS.
 
+### 6. Content Standards
+
+#### Mandatory Difficulty Levels
+The game must support exactly these four difficulty levels:
+- **Kids**: Perfect for curious minds around 10 years old! Fun questions about animals, colors, and basic facts.
+- **Easy**: Great for testing what you learned in school with questions about geography, basic science, and history.
+- **Medium**: University-level challenges! Dive deeper into literature, advanced science, and complex historical facts.
+- **Hard**: University-level knowledge! Mind-bending questions about advanced topics, philosophy, and specialized knowledge.
+
+#### Mandatory Categories
+All trivia questions must be categorized into exactly these seven categories:
+1. **Fun Facts** - Interesting and surprising facts from various domains
+2. **History** - Historical events, figures, and periods
+3. **Geography** - Countries, capitals, landmarks, and geographical features
+4. **Music** - Musicians, genres, instruments, and musical history
+5. **Literature** - Authors, books, poetry, and literary movements
+6. **Science** - Biology, chemistry, physics, and scientific discoveries
+7. **Politics** - Government systems, political figures, and civic knowledge
+
+These categories and difficulty levels are mandatory and must be adhered to in all question content and game logic.
+
 ---
 
 ## Pull Request Checklist
