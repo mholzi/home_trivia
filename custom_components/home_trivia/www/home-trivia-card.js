@@ -93,7 +93,7 @@ class HomeTriviaCard extends HTMLElement {
         .splash-screen {
           text-align: center;
           padding: 24px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #764ba2 75%, #667eea 100%);
           border-radius: var(--ha-card-border-radius, 4px);
           color: white;
           position: relative;
@@ -131,8 +131,14 @@ class HomeTriviaCard extends HTMLElement {
         .note-5 { top: 40%; left: 50%; animation-delay: 4s; }
         
         @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(10deg); }
+          0%, 100% { 
+            transform: translateY(0px) rotate(0deg); 
+            opacity: 0.3;
+          }
+          50% { 
+            transform: translateY(-20px) rotate(10deg); 
+            opacity: 0.6;
+          }
         }
         
         .splash-title {
@@ -140,12 +146,14 @@ class HomeTriviaCard extends HTMLElement {
           font-weight: bold;
           margin-bottom: 16px;
           text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+          letter-spacing: 1px;
         }
         
         .splash-subtitle {
           font-size: 1.2em;
           margin-bottom: 20px;
           opacity: 0.9;
+          font-weight: 500;
         }
         
         .splash-sound-waves {
@@ -181,11 +189,13 @@ class HomeTriviaCard extends HTMLElement {
           padding: 24px;
           margin: 20px 0;
           backdrop-filter: blur(10px);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
         
         .setup-message h2 {
           margin: 0 0 8px 0;
           font-size: 1.5em;
+          font-weight: 600;
         }
         
         .setup-message p {
@@ -200,6 +210,12 @@ class HomeTriviaCard extends HTMLElement {
           margin-bottom: 16px;
           text-align: left;
           transition: all 0.3s ease;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .splash-input-section:hover {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.4);
         }
         
         .splash-input-section.error {
@@ -239,12 +255,14 @@ class HomeTriviaCard extends HTMLElement {
           color: var(--primary-text-color);
           font-size: 16px;
           box-sizing: border-box;
+          transition: all 0.2s ease;
         }
         
         .form-select:focus, .splash-team-input:focus, .splash-team-select:focus {
           outline: none;
           border-color: rgba(255, 255, 255, 0.8);
           box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.95);
         }
         
         .splash-teams-container {
@@ -260,6 +278,12 @@ class HomeTriviaCard extends HTMLElement {
           background: rgba(255, 255, 255, 0.1);
           padding: 12px;
           border-radius: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .splash-team-item:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
         }
         
         .team-label {
@@ -282,21 +306,24 @@ class HomeTriviaCard extends HTMLElement {
           display: inline-flex;
           align-items: center;
           gap: 8px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         
         .splash-start-button:hover {
           background: rgba(255, 255, 255, 0.3);
           border-color: rgba(255, 255, 255, 0.8);
           transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
         
         .splash-start-button.ready {
-          background: rgba(76, 175, 80, 0.8);
+          background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
           border-color: rgba(76, 175, 80, 1);
         }
         
         .splash-start-button.ready:hover {
-          background: rgba(76, 175, 80, 1);
+          background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+          box-shadow: 0 6px 25px rgba(76, 175, 80, 0.4);
         }
         
         .start-help {
@@ -309,10 +336,19 @@ class HomeTriviaCard extends HTMLElement {
           .splash-team-item {
             grid-template-columns: 1fr;
             text-align: center;
+            gap: 8px;
           }
           
           .team-label {
             text-align: center;
+          }
+          
+          .splash-title {
+            font-size: 2em;
+          }
+          
+          .splash-subtitle {
+            font-size: 1em;
           }
         }
       </style>
@@ -320,10 +356,10 @@ class HomeTriviaCard extends HTMLElement {
       <div class="splash-screen">
         <div class="splash-floating-notes">
           <div class="note note-1">🎵</div>
-          <div class="note note-2">🎯</div>
-          <div class="note note-3">🧠</div>
-          <div class="note note-4">🏆</div>
-          <div class="note note-5">❓</div>
+          <div class="note note-2">🎼</div>
+          <div class="note note-3">🎯</div>
+          <div class="note note-4">🧠</div>
+          <div class="note note-5">⚙️</div>
         </div>
         
         <div class="splash-header">
@@ -362,6 +398,21 @@ class HomeTriviaCard extends HTMLElement {
     // Add event listeners
     this.shadowRoot.getElementById('difficulty-select')?.addEventListener('change', (e) => {
       this.updateDifficultyDescription(e.target.value);
+      // Persist difficulty level immediately
+      this.debouncedServiceCall('difficulty_level', () => {
+        this._hass.callService('home_trivia', 'update_difficulty_level', {
+          difficulty_level: e.target.value
+        });
+      }, 100);
+    });
+
+    this.shadowRoot.getElementById('timer-select')?.addEventListener('change', (e) => {
+      // Persist timer length immediately
+      this.debouncedServiceCall('timer_length', () => {
+        this._hass.callService('home_trivia', 'update_countdown_timer_length', {
+          timer_length: parseInt(e.target.value)
+        });
+      }, 100);
     });
 
     this.shadowRoot.getElementById('team-count-select')?.addEventListener('change', (e) => {
@@ -496,9 +547,18 @@ class HomeTriviaCard extends HTMLElement {
         this.usersLoaded = true;
       } finally {
         this._isLoadingUsers = false;
-        // Re-render if we're showing splash screen
+        // Only re-render if we're showing splash screen and no form element has focus
         if (this.shouldShowSplashScreen()) {
-          this.requestUpdate();
+          const activeElement = this.shadowRoot.activeElement;
+          const isFormInputActive = activeElement && (
+            activeElement.tagName === 'INPUT' || 
+            activeElement.tagName === 'SELECT' || 
+            activeElement.tagName === 'TEXTAREA'
+          );
+          
+          if (!isFormInputActive) {
+            this.requestUpdate();
+          }
         }
       }
     }
@@ -563,7 +623,7 @@ class HomeTriviaCard extends HTMLElement {
           name: name.trim()
         });
       }
-    }, 500); // Longer delay for text input
+    }, 300); // Reduced delay for more immediate persistence
   }
 
   updateTeamUserId(teamId, userId) {
@@ -576,12 +636,8 @@ class HomeTriviaCard extends HTMLElement {
         });
       }
       
-      // Trigger immediate UI refresh to reflect the change
-      setTimeout(() => {
-        if (this.shouldShowSplashScreen()) {
-          this.requestUpdate();
-        }
-      }, 100);
+      // Don't trigger full re-render to avoid destroying form focus
+      // The service call will update the entity state automatically
     });
   }
 
