@@ -636,7 +636,7 @@ async def _register_services(hass: HomeAssistant) -> None:
             team_sensor = team_sensors.get(team_key)
             
             if team_sensor and hasattr(team_sensor, '_participating') and team_sensor._participating:
-                team_name = team_sensor.state if hasattr(team_sensor, 'state') else f"Team {i}"
+                team_name = team_sensor._team_name if hasattr(team_sensor, '_team_name') else f"Team {i}"
                 total_points = team_sensor._points if hasattr(team_sensor, '_points') else 0
                 
                 if highscore_sensor and hasattr(highscore_sensor, 'update_highscore'):

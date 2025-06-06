@@ -1056,11 +1056,16 @@ class HomeTriviaCard extends HTMLElement {
     
     // Left side: Global Highscore (always visible)
     let highscoreHtml = '<div class="highscore-content">';
-    if (highscoreSensor && highscoreSensor.attributes.team_name !== "No Team") {
+    if (highscoreSensor && highscoreSensor.attributes && highscoreSensor.attributes.team_name !== "No Team") {
+      const avgPoints = highscoreSensor.attributes.average_points || 0;
+      const totalPoints = highscoreSensor.attributes.total_points || 0;
+      const totalRounds = highscoreSensor.attributes.total_rounds || 0;
+      const teamName = highscoreSensor.attributes.team_name || "Unknown Team";
+      
       highscoreHtml += `
-        <div class="highscore-team">🏆 ${highscoreSensor.attributes.team_name}</div>
-        <div class="highscore-average">${highscoreSensor.attributes.average_points.toFixed(1)} pts/round</div>
-        <div class="highscore-details">${highscoreSensor.attributes.total_points} pts in ${highscoreSensor.attributes.total_rounds} rounds</div>
+        <div class="highscore-team">🏆 ${this.escapeHtml(teamName)}</div>
+        <div class="highscore-average">${avgPoints.toFixed(1)} pts/round</div>
+        <div class="highscore-details">${totalPoints} pts in ${totalRounds} rounds</div>
       `;
     } else {
       highscoreHtml += `
@@ -1078,14 +1083,15 @@ class HomeTriviaCard extends HTMLElement {
       
       for (let i = 1; i <= 5; i++) {
         const team = this._hass.states[`sensor.home_trivia_team_${i}`];
-        if (!team || !team.attributes.participating) continue;
+        if (!team || !team.attributes || !team.attributes.participating) continue;
         
         const points = team.attributes.points || 0;
         const average = currentRound > 0 ? (points / currentRound).toFixed(1) : '0.0';
+        const teamName = team.state || `Team ${i}`;
         
         teamScoresHtml += `
           <div class="team-score-item">
-            <span class="team-score-name">${team.state}</span>
+            <span class="team-score-name">${this.escapeHtml(teamName)}</span>
             <span class="team-score-average">${average} pts/round</span>
           </div>
         `;
@@ -1122,18 +1128,19 @@ class HomeTriviaCard extends HTMLElement {
     
     for (let i = 1; i <= 5; i++) {
       const team = this._hass.states[`sensor.home_trivia_team_${i}`];
-      if (!team || !team.attributes.participating) continue;
+      if (!team || !team.attributes || !team.attributes.participating) continue;
 
-      const answered = team.attributes.answered;
-      const answer = team.attributes.answer;
+      const answered = team.attributes.answered || false;
+      const answer = team.attributes.answer || '';
       const points = team.attributes.points || 0;
+      const teamName = team.state || `Team ${i}`;
 
       html += `
         <div class="team-card">
-          <div class="team-name">${team.state}</div>
+          <div class="team-name">${this.escapeHtml(teamName)}</div>
           <div class="team-points">${points} points</div>
           <div class="team-answer ${answered ? 'team-answered' : 'team-not-answered'}">
-            ${answered ? `Answer: ${answer}` : 'Not answered'}
+            ${answered ? `Answer: ${this.escapeHtml(answer)}` : 'Not answered'}
           </div>
         </div>
       `;
@@ -1219,19 +1226,25 @@ class HomeTriviaCard extends HTMLElement {
   async nextQuestion() {
     // Complete the current round first (if there was a question)
     const currentQuestion = this._hass.states['sensor.home_trivia_current_question'];
-    if (currentQuestion && currentQuestion.attributes.question) {
+    if (currentQuestion && currentQuestion.attributes && currentQuestion.attributes.question) {
       await this._hass.callService('home_trivia', 'complete_round', {});
+      
+      // Small delay to allow state updates to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Reset team answers for the next question
       for (let i = 1; i <= 5; i++) {
         const team = this._hass.states[`sensor.home_trivia_team_${i}`];
-        if (team && team.attributes.participating) {
+        if (team && team.attributes && team.attributes.participating) {
           await this._hass.callService('home_trivia', 'update_team_answer', {
             team_id: `team_${i}`,
             answer: null
           });
         }
       }
+      
+      // Another small delay before moving to next question
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     // Move to the next question
