@@ -1,0 +1,14 @@
+{
+  "domain": "home_trivia",
+  "name": "Home Trivia",
+  "version": "1.0.0",
+  "documentation": "https://github.com/mholzi/home_trivia",
+  "issue_tracker": "https://github.com/mholzi/home_trivia/issues",
+  "dependencies": [],
+  "codeowners": ["@mholzi"],
+  "requirements": [],
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "integration_type": "service",
+  "after_dependencies": ["frontend"]
+}

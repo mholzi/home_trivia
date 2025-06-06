@@ -1,0 +1,134 @@
+[
+  {
+    "id": 1,
+    "category": "Animals",
+    "question": "What sound does a cow make?",
+    "answer_a": "Woof",
+    "answer_b": "Moo",
+    "answer_c": "Meow",
+    "correct_answer": "B",
+    "fun_fact": "Cows actually have different moos for different situations! They use different sounds to communicate with their calves, show distress, or express contentment. Scientists have identified at least 11 different types of cow vocalizations, each with its own meaning in the bovine social world.",
+    "difficulty_level": "Kids"
+  },
+  {
+    "id": 2,
+    "category": "Colors",
+    "question": "What do you get when you mix red and blue?",
+    "answer_a": "Green",
+    "answer_b": "Yellow",
+    "answer_c": "Purple",
+    "correct_answer": "C",
+    "fun_fact": "Purple has been associated with royalty for thousands of years because purple dye was extremely expensive to make in ancient times. It came from murex snails, and thousands of snails were needed to make just a small amount of dye, making purple clothing a luxury only the wealthy could afford.",
+    "difficulty_level": "Kids"
+  },
+  {
+    "id": 3,
+    "category": "Numbers",
+    "question": "How many legs does a spider have?",
+    "answer_a": "6",
+    "answer_b": "8",
+    "answer_c": "10",
+    "correct_answer": "B",
+    "fun_fact": "Spiders are arachnids, not insects, which is why they have 8 legs instead of 6 like insects do. Each leg has seven segments and is incredibly strong - a spider can lose a leg and regrow it during molting. Some spiders can even voluntarily detach a leg if caught by a predator, a process called autotomy!",
+    "difficulty_level": "Kids"
+  },
+  {
+    "id": 4,
+    "category": "Geography",
+    "question": "What is the capital of France?",
+    "answer_a": "London",
+    "answer_b": "Berlin",
+    "answer_c": "Paris",
+    "correct_answer": "C",
+    "fun_fact": "Paris is known as the 'City of Light' not just because it was one of the first cities to use gas street lighting, but also because it has been a center of education and ideas during the Age of Enlightenment. The city has over 130 museums and monuments, making it one of the world's top cultural destinations.",
+    "difficulty_level": "Easy"
+  },
+  {
+    "id": 5,
+    "category": "Science",
+    "question": "What gas do plants absorb from the atmosphere during photosynthesis?",
+    "answer_a": "Oxygen",
+    "answer_b": "Carbon Dioxide",
+    "answer_c": "Nitrogen",
+    "correct_answer": "B",
+    "fun_fact": "During photosynthesis, plants convert carbon dioxide and water into glucose and oxygen using sunlight. This process not only feeds the plant but also produces the oxygen we breathe. A single large tree can produce enough oxygen for two people per day, and it can absorb 48 pounds of carbon dioxide annually!",
+    "difficulty_level": "Easy"
+  },
+  {
+    "id": 6,
+    "category": "History",
+    "question": "In which year did World War II end?",
+    "answer_a": "1944",
+    "answer_b": "1945",
+    "answer_c": "1946",
+    "correct_answer": "B",
+    "fun_fact": "World War II officially ended on September 2, 1945, when Japan formally surrendered aboard the USS Missouri in Tokyo Bay. This date is known as V-J Day (Victory over Japan Day). Interestingly, the war ended exactly six years and one day after it began with Germany's invasion of Poland on September 1, 1939.",
+    "difficulty_level": "Easy"
+  },
+  {
+    "id": 7,
+    "category": "Literature",
+    "question": "Who wrote the novel '1984'?",
+    "answer_a": "Aldous Huxley",
+    "answer_b": "Ray Bradbury",
+    "answer_c": "George Orwell",
+    "correct_answer": "C",
+    "fun_fact": "George Orwell wrote '1984' in 1948 and simply reversed the last two digits to create the title. The novel introduced concepts like 'Big Brother,' 'thoughtcrime,' and 'doublethink' that have become part of everyday language. Orwell was inspired by his experiences during the Spanish Civil War and his observations of totalitarian regimes.",
+    "difficulty_level": "Medium"
+  },
+  {
+    "id": 8,
+    "category": "Science",
+    "question": "What is the chemical symbol for the element Gold?",
+    "answer_a": "Go",
+    "answer_b": "Au",
+    "answer_c": "Gd",
+    "correct_answer": "B",
+    "fun_fact": "Gold's chemical symbol 'Au' comes from the Latin word 'aurum,' meaning 'shining dawn.' Gold is one of the least reactive chemical elements, which is why it doesn't tarnish or corrode. All the gold ever mined in human history would fit into a cube with sides of about 21 meters - roughly the size of a tennis court!",
+    "difficulty_level": "Medium"
+  },
+  {
+    "id": 9,
+    "category": "Mathematics",
+    "question": "What is the derivative of x³ with respect to x?",
+    "answer_a": "3x²",
+    "answer_b": "x²",
+    "answer_c": "3x",
+    "correct_answer": "A",
+    "fun_fact": "This follows the power rule of differentiation, which states that the derivative of xⁿ is n·xⁿ⁻¹. This fundamental rule was developed by mathematicians like Newton and Leibniz in the 17th century and forms the basis of calculus. The power rule is essential for understanding rates of change in physics, economics, and engineering applications.",
+    "difficulty_level": "Medium"
+  },
+  {
+    "id": 10,
+    "category": "Physics",
+    "question": "What is the Heisenberg Uncertainty Principle primarily concerned with?",
+    "answer_a": "The speed of light",
+    "answer_b": "The position and momentum of particles",
+    "answer_c": "The mass-energy equivalence",
+    "correct_answer": "B",
+    "fun_fact": "Werner Heisenberg's Uncertainty Principle states that you cannot simultaneously know both the exact position and exact momentum of a particle. This isn't due to measurement limitations but is a fundamental property of quantum mechanics. The principle has profound implications for our understanding of reality at the atomic level and helped establish quantum mechanics as a complete theory.",
+    "difficulty_level": "Difficult"
+  },
+  {
+    "id": 11,
+    "category": "Philosophy",
+    "question": "Which philosopher wrote 'Critique of Pure Reason'?",
+    "answer_a": "Immanuel Kant",
+    "answer_b": "Friedrich Nietzsche",
+    "answer_c": "Georg Wilhelm Friedrich Hegel",
+    "correct_answer": "A",
+    "fun_fact": "Kant's 'Critique of Pure Reason' (1781) revolutionized philosophy by arguing that while we can never know things as they are in themselves (noumena), we can know how things appear to us (phenomena) through the structures of our mind. This 'Copernican revolution' in philosophy influenced virtually every subsequent philosophical movement and established Kant as one of history's most important thinkers.",
+    "difficulty_level": "Difficult"
+  },
+  {
+    "id": 12,
+    "category": "Mathematics",
+    "question": "What is the sum of the first n natural numbers according to Gauss's formula?",
+    "answer_a": "n(n+1)",
+    "answer_b": "n(n+1)/2",
+    "answer_c": "n²+n",
+    "correct_answer": "B",
+    "fun_fact": "Legend has it that Carl Friedrich Gauss discovered this formula as a 9-year-old student when his teacher asked the class to sum the numbers from 1 to 100. While his classmates laboriously added each number, Gauss realized that pairing numbers (1+100, 2+99, etc.) always gave 101, and with 50 such pairs, the answer was 50×101=5050. This insight led to the general formula n(n+1)/2 for the sum of the first n natural numbers.",
+    "difficulty_level": "Difficult"
+  }
+]
