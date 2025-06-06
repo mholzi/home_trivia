@@ -423,6 +423,13 @@ class HomeTriviaCard extends HTMLElement {
   renderSplashInputs() {
     let inputsHtml = '';
 
+    // Get current values from Home Assistant entities
+    const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
+    const timerSensor = this._hass?.states['sensor.home_trivia_countdown_timer'];
+    
+    const currentDifficulty = gameStatus?.attributes?.difficulty_level || 'Easy';
+    const currentTimerLength = timerSensor?.state || '30';
+
     // Difficulty Level Input
     inputsHtml += `
       <div class="splash-input-section">
@@ -432,13 +439,13 @@ class HomeTriviaCard extends HTMLElement {
         </div>
         <p class="input-description">Choose the difficulty level for your trivia questions</p>
         <select class="form-select" id="difficulty-select">
-          <option value="Kids">🧒 Kids Level</option>
-          <option value="Easy" selected>🎓 Easy Level</option>
-          <option value="Medium">🏛️ Medium Level</option>
-          <option value="Hard">🧠 Hard Level</option>
+          <option value="Kids" ${currentDifficulty === 'Kids' ? 'selected' : ''}>🧒 Kids Level</option>
+          <option value="Easy" ${currentDifficulty === 'Easy' ? 'selected' : ''}>🎓 Easy Level</option>
+          <option value="Medium" ${currentDifficulty === 'Medium' ? 'selected' : ''}>🏛️ Medium Level</option>
+          <option value="Hard" ${currentDifficulty === 'Hard' ? 'selected' : ''}>🧠 Hard Level</option>
         </select>
         <div class="difficulty-description" id="difficulty-description" style="margin-top: 8px; opacity: 0.8; font-style: italic;">
-          Great for testing what you learned in school with questions about geography, basic science, and history.
+          ${this.getDifficultyDescription(currentDifficulty)}
         </div>
       </div>
     `;
@@ -452,11 +459,11 @@ class HomeTriviaCard extends HTMLElement {
         </div>
         <p class="input-description">How long teams have to answer each question</p>
         <select class="form-select" id="timer-select">
-          <option value="15">15 seconds</option>
-          <option value="20">20 seconds</option>
-          <option value="30" selected>30 seconds</option>
-          <option value="45">45 seconds</option>
-          <option value="60">60 seconds</option>
+          <option value="15" ${currentTimerLength === '15' ? 'selected' : ''}>15 seconds</option>
+          <option value="20" ${currentTimerLength === '20' ? 'selected' : ''}>20 seconds</option>
+          <option value="30" ${currentTimerLength === '30' ? 'selected' : ''}>30 seconds</option>
+          <option value="45" ${currentTimerLength === '45' ? 'selected' : ''}>45 seconds</option>
+          <option value="60" ${currentTimerLength === '60' ? 'selected' : ''}>60 seconds</option>
         </select>
       </div>
     `;
@@ -479,10 +486,17 @@ class HomeTriviaCard extends HTMLElement {
       </div>
     `;
 
-    // Team Setup (always show with user dropdowns)
+    // Team Setup (show teams based on team count selection)
     const teams = this.getTeams();
     const users = this.homeAssistantUsers || [];
     const isLoadingUsers = this._isLoadingUsers || (!this.usersLoaded && users.length === 0);
+    
+    // Determine team count - check if team count select exists and get its value, otherwise default to 2
+    let teamCount = 2; // default
+    const existingTeamCountSelect = this.shadowRoot?.getElementById('team-count-select');
+    if (existingTeamCountSelect) {
+      teamCount = parseInt(existingTeamCountSelect.value) || 2;
+    }
     
     inputsHtml += `
       <div class="splash-input-section">
@@ -492,7 +506,7 @@ class HomeTriviaCard extends HTMLElement {
         </div>
         <p class="input-description">Assign names and users to your teams</p>
         <div class="splash-teams-container">
-          ${Object.entries(teams).slice(0, 2).map(([teamId, team]) => `
+          ${Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => `
             <div class="splash-team-item">
               <label class="team-label">Team ${teamId.split('_')[1]}:</label>
               <input type="text" class="splash-team-input" id="team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
@@ -641,17 +655,20 @@ class HomeTriviaCard extends HTMLElement {
     });
   }
 
-  updateDifficultyDescription(difficulty) {
+  getDifficultyDescription(difficulty) {
     const descriptions = {
       'Kids': 'Perfect for curious minds around 10 years old! Fun questions about animals, colors, and basic facts.',
       'Easy': 'Great for testing what you learned in school with questions about geography, basic science, and history.',
       'Medium': 'University-level challenges! Dive deeper into literature, advanced science, and complex historical facts.',
       'Hard': 'University-level knowledge! Mind-bending questions about advanced topics, philosophy, and specialized knowledge.'
     };
-    
+    return descriptions[difficulty] || descriptions['Easy'];
+  }
+
+  updateDifficultyDescription(difficulty) {
     const descElement = this.shadowRoot.getElementById('difficulty-description');
     if (descElement) {
-      descElement.textContent = descriptions[difficulty] || '';
+      descElement.textContent = this.getDifficultyDescription(difficulty);
     }
   }
 
