@@ -16,6 +16,9 @@ class HomeTriviaCard extends HTMLElement {
     this.homeAssistantUsers = [];
     this.usersLoaded = false;
     this._isLoadingUsers = false;
+    
+    // Flag to control when to show splash screen explicitly
+    this._showSplashScreen = false;
   }
 
   // HTML escape utility for security
@@ -37,25 +40,32 @@ class HomeTriviaCard extends HTMLElement {
     const hass = this._hass;
     if (!hass) return true;
 
+    // If user explicitly requested splash screen, show it
+    if (this._showSplashScreen) return true;
+
     // Check if we have minimum required data
     const gameStatus = hass.states['sensor.home_trivia_game_status'];
     const team1 = hass.states['sensor.home_trivia_team_1'];
     
     if (!gameStatus || !team1) return true;
 
-    // Check if teams have names
-    for (let i = 1; i <= 5; i++) {
-      const team = hass.states[`sensor.home_trivia_team_${i}`];
-      if (team && team.attributes.participating && team.state === `Team ${i}`) {
-        return true; // Default name detected, show splash
-      }
-    }
-
+    // Only show splash screen for critical missing entities, not for default team names
+    // Users can explicitly show splash by clicking Start Game button
     return false;
   }
 
   set hass(hass) {
     this._hass = hass;
+    this.requestUpdate();
+  }
+
+  showSplashScreen() {
+    this._showSplashScreen = true;
+    this.requestUpdate();
+  }
+
+  hideSplashScreen() {
+    this._showSplashScreen = false;
     this.requestUpdate();
   }
 
@@ -761,6 +771,8 @@ class HomeTriviaCard extends HTMLElement {
     // Start the game after a delay to ensure all settings are applied
     setTimeout(() => {
       this._hass.callService('home_trivia', 'start_game', {});
+      // Hide splash screen after starting the game
+      this.hideSplashScreen();
     }, 800);
   }
 
@@ -1025,7 +1037,7 @@ class HomeTriviaCard extends HTMLElement {
             ⏹️ Stop Game
           </button>
         ` : `
-          <button class="control-button secondary-button" onclick="this.getRootNode().host.startGame()">
+          <button class="control-button secondary-button" onclick="this.getRootNode().host.showSplashScreen()">
             🚀 Start Game
           </button>
         `}
