@@ -31,7 +31,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 - **🧒 Kids Level** - Perfect for curious minds around 10 years old
 - **🎓 Easy Level** - A-level knowledge for school topics  
 - **🏛️ Medium Level** - University-level challenges
-- **🧠 Difficult Level** - Mind-bending questions for true intellectuals
+- **🧠 Hard Level** - University-level knowledge for true intellectuals
 
 ### 👥 **Team Competition** 
 - Support for 1-5 teams with custom names
@@ -93,10 +93,14 @@ type: custom:home-trivia-card
 ## 🎲 Game Logic
 
 ### Question Categories
-- Animals, Colors, Numbers (Kids)
-- Geography, Science, History (Easy)  
-- Literature, Advanced Science, Mathematics (Medium)
-- Philosophy, Physics, Complex Mathematics (Difficult)
+The game features 7 mandatory categories across all difficulty levels:
+- **Fun Facts** - Interesting and surprising facts from various domains
+- **History** - Historical events, figures, and periods  
+- **Geography** - Countries, capitals, landmarks, and geographical features
+- **Music** - Musicians, genres, instruments, and musical history
+- **Literature** - Authors, books, poetry, and literary movements
+- **Science** - Biology, chemistry, physics, and scientific discoveries
+- **Politics** - Government systems, political figures, and civic knowledge
 
 ### Scoring System
 - **Correct Answer**: 10 base points

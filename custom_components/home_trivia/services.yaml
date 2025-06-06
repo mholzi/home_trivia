@@ -115,7 +115,7 @@ update_difficulty_level:
             - "Kids"
             - "Easy"
             - "Medium"
-            - "Difficult"
+            - "Hard"
 
 update_countdown_timer_length:
   name: Update Countdown Timer Length
