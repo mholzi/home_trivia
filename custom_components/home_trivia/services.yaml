@@ -1,0 +1,166 @@
+start_game:
+  name: Start Game
+  description: Start a new Home Trivia game session - resets teams and stops any countdown timer
+  fields: {}
+
+stop_game:
+  name: Stop Game
+  description: Stop the current Home Trivia game session
+  fields: {}
+
+reset_game:
+  name: Reset Game
+  description: Reset the Home Trivia game to initial state
+  fields: {}
+
+next_question:
+  name: Next Question
+  description: Skip to the next trivia question and start the countdown timer
+  fields: {}
+
+update_team_name:
+  name: Update Team Name
+  description: Update the name of a team
+  fields:
+    team_id:
+      name: Team ID
+      description: The team identifier (team_1, team_2, team_3, team_4, or team_5)
+      required: true
+      example: "team_1"
+      selector:
+        text:
+    name:
+      name: Team Name
+      description: The new name for the team
+      required: true
+      example: "Awesome Team"
+      selector:
+        text:
+
+update_team_points:
+  name: Update Team Points
+  description: Update the points of a team
+  fields:
+    team_id:
+      name: Team ID
+      description: The team identifier (team_1, team_2, team_3, team_4, or team_5)
+      required: true
+      example: "team_1"
+      selector:
+        text:
+    points:
+      name: Points
+      description: The new points value for the team
+      required: true
+      example: 100
+      selector:
+        number:
+          min: 0
+          max: 99999
+
+update_team_participating:
+  name: Update Team Participating
+  description: Update whether a team is participating in the game
+  fields:
+    team_id:
+      name: Team ID
+      description: The team identifier (team_1, team_2, team_3, team_4, or team_5)
+      required: true
+      example: "team_1"
+      selector:
+        text:
+    participating:
+      name: Participating
+      description: Whether the team is participating in the game
+      required: true
+      example: true
+      selector:
+        boolean:
+
+update_team_answer:
+  name: Update Team Answer
+  description: Update the answer choice of a team (A, B, or C)
+  fields:
+    team_id:
+      name: Team ID
+      description: The team identifier (team_1, team_2, team_3, team_4, or team_5)
+      required: true
+      example: "team_1"
+      selector:
+        text:
+    answer:
+      name: Answer
+      description: The answer choice (A, B, or C)
+      required: true
+      example: "A"
+      selector:
+        select:
+          options:
+            - "A"
+            - "B"
+            - "C"
+
+update_difficulty_level:
+  name: Update Difficulty Level
+  description: Update the difficulty level of questions
+  fields:
+    difficulty_level:
+      name: Difficulty Level
+      description: The difficulty level for questions
+      required: true
+      example: "Easy"
+      selector:
+        select:
+          options:
+            - "Kids"
+            - "Easy"
+            - "Medium"
+            - "Difficult"
+
+update_countdown_timer_length:
+  name: Update Countdown Timer Length
+  description: Update the countdown timer length in seconds
+  fields:
+    timer_length:
+      name: Timer Length
+      description: The countdown timer length in seconds
+      required: true
+      example: 30
+      selector:
+        number:
+          min: 5
+          max: 300
+          step: 5
+
+update_team_count:
+  name: Update Team Count
+  description: Update the number of teams participating in the game
+  fields:
+    team_count:
+      name: Team Count
+      description: The number of teams that will participate (1-5)
+      required: true
+      example: 3
+      selector:
+        number:
+          min: 1
+          max: 5
+
+update_team_user_id:
+  name: Update Team User ID
+  description: Update the assigned user ID for a team
+  fields:
+    team_id:
+      name: Team ID
+      description: The team identifier (team_1, team_2, team_3, team_4, or team_5)
+      required: true
+      example: "team_1"
+      selector:
+        text:
+    user_id:
+      name: User ID
+      description: The Home Assistant user ID to assign to this team
+      required: false
+      example: "1234567890123456789abcdef123456"
+      selector:
+        text:
