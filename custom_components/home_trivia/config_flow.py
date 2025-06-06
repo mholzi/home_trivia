@@ -18,7 +18,7 @@ DIFFICULTY_LEVELS = {
     "Kids": "🧒 Kids Level - Perfect for curious minds around 10 years old! Fun, colorful questions about animals, colors, and basic facts that will make learning exciting.",
     "Easy": "🎓 Easy Level - A-level knowledge! Great for testing what you learned in school with questions about geography, basic science, and history.",
     "Medium": "🏛️ Medium Level - University-level challenges! Dive deeper into literature, advanced science, and complex historical facts.",
-    "Difficult": "🧠 Difficult Level - For the true intellectuals! Mind-bending questions about philosophy, advanced mathematics, and cutting-edge physics concepts."
+    "Hard": "🧠 Hard Level - University-level knowledge! Mind-bending questions about advanced topics, philosophy, and specialized knowledge."
 }
 
 
