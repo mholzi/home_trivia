@@ -17,6 +17,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 ✅ **Team Competition** - Support for up to 5 teams with custom or default names  
 ✅ **Smart Scoring** - Base points plus speed bonuses keep games exciting  
 ✅ **Persistent Settings** - Your game preferences are automatically saved and restored with optimistic UI updates  
+✅ **Animated Progress Bar** - Smooth visual countdown with live timer updates and dynamic color transitions  
 
 **Getting Started is Simple:**
 1. Install via HACS or manually
@@ -57,10 +58,12 @@ This means you can configure your entire trivia game setup smoothly in one sessi
 ### ⏱️ **Smart Timing System**
 - Configurable countdown timer (10-120 seconds)
 - **Automatic countdown** - Timer decreases live every second
-- **Visual feedback** - Red pulsing animation when time is up, orange warning for last 5 seconds
+- **Visual progress bar** - Smooth animated progress bar shows time remaining at a glance
+- **Dynamic visual feedback** - Progress bar changes from green to blue normally, orange for warnings, red pulsing when time is up
+- **Smooth animations** - CSS transitions provide fluid, non-jerky countdown experience 
 - Speed bonus points based on remaining time
 - Automatic progression and round management
-- **No manual setup needed** - Timer works automatically when integration is installed
+- **No manual setup needed** - Timer and progress bar work automatically when integration is installed
 
 ### 🏆 **Advanced Scoring**
 - **Base Points**: 10 points for correct answers
@@ -73,7 +76,8 @@ This means you can configure your entire trivia game setup smoothly in one sessi
 - Mobile-friendly design with QR code for easy device access
 - Intuitive splash screen for easy setup
 - **Live countdown timer** with automatic updates every second
-- **Visual timer feedback** - Changes color and animation when time runs out
+- **Animated progress bar** - Smooth visual countdown with gradient colors and fluid transitions
+- **Visual timer feedback** - Progress bar and timer change colors and animations when time runs out
 - Real-time game status updates
 - **Admin-only Game Settings** - Dedicated settings panel for timer controls and game management (visible only to Home Assistant admins/owners)
 
@@ -166,7 +170,10 @@ The Game Settings section provides streamlined game management tools while keepi
 ### 🔥 Live Timer Features
 The countdown timer now works **automatically** with no setup required:
 - **Real-time countdown**: Decrements every second and updates the UI live
+- **Animated progress bar**: Smooth visual progress indicator with CSS transitions
+- **Dynamic colors**: Progress bar transitions from green to blue, orange for warnings, red when time expires
 - **Visual feedback**: Orange warning at ≤5 seconds, red pulsing animation when time is up
+- **Fluid animations**: Non-jerky, smooth countdown experience with 0.8-second transition timing
 - **Smart cleanup**: Automatically stops when games start/stop or when timer reaches zero
 - **Non-blocking**: Uses Home Assistant's async framework for smooth performance
 
