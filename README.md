@@ -38,7 +38,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 
 This means you can configure your entire trivia game setup smoothly in one session, without frustrating input reversions or having to re-enter the same information multiple times.
 
-**Enhanced Admin Controls:** Home Assistant administrators now have access to exclusive Game Settings during gameplay, providing streamlined controls for timer adjustments and game management without cluttering the interface for regular players.
+**Enhanced Team 1 Owner Controls:** The owner of Team 1 now has access to exclusive Game Settings during gameplay, providing streamlined controls for timer adjustments and game management without cluttering the interface for regular players.
 
 ## ✨ Features
 
@@ -75,7 +75,7 @@ This means you can configure your entire trivia game setup smoothly in one sessi
 - **Live countdown timer** with automatic updates every second
 - **Visual timer feedback** - Changes color and animation when time runs out
 - Real-time game status updates
-- **Admin-only Game Settings** - Dedicated settings panel for timer controls and game management (visible only to Home Assistant admins/owners)
+- **Team 1 Owner Game Settings** - Dedicated settings panel for timer controls and game management (visible only to Team 1 owner)
 
 ## 🚀 Quick Start
 
@@ -143,16 +143,18 @@ The integration supports configuration through the UI with **automatic persisten
 All game setup parameters are **automatically saved** and restored across Home Assistant restarts:
 - **Difficulty Level**: Choose question complexity - *setting is remembered*
 - **Team Count**: 1-5 participating teams - *setting is remembered*  
-- **Timer Length**: 10-120 seconds per question - *setting is remembered* (configurable via admin-only Game Settings)
+- **Timer Length**: 10-120 seconds per question - *setting is remembered* (configurable via Team 1 Owner Game Settings)
 - **Team Names**: Custom or default names for each team - *names are remembered*
 
 **No manual configuration required!** Simply set your preferences once on the splash screen, and they'll be automatically restored every time you use Home Trivia, even after Home Assistant restarts or reloads.
 
 ### ⚙️ Admin Game Settings (New!)
-Home Assistant administrators and owners have access to an exclusive **Game Settings** section that includes:
+The owner of **Team 1** has access to an exclusive **Game Settings** section that includes:
 - **Timer Length Control**: Adjust question timer from 15-60 seconds during gameplay
 - **Reset Game**: Convenient reset button to restart the entire game session
-- **Admin-Only Access**: Only visible to users with admin or owner privileges in Home Assistant
+- **Team 1 Owner Access**: Only visible to the user assigned to Team 1
+
+**Admin Rights**: Admin privileges are determined by Team 1 ownership. Whoever is assigned as the user for Team 1 becomes the game administrator with access to exclusive settings and controls.
 
 The Game Settings section provides streamlined game management tools while keeping the interface clean for regular players.
 
