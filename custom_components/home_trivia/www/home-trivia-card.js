@@ -97,12 +97,19 @@ class HomeTriviaCard extends HTMLElement {
            Object.keys(this._pendingFormValues.teamUserIds).length > 0;
   }
 
-  // Check if current user is admin (owner or admin)
+  // Check if current user is admin (Team 1 owner)
   isCurrentUserAdmin() {
     if (!this._hass || !this._hass.user) {
       return false;
     }
-    return this._hass.user.is_owner === true || this._hass.user.is_admin === true;
+    
+    // Admin rights are determined by Team 1 ownership
+    const team1State = this._hass.states['sensor.home_trivia_team_1'];
+    if (!team1State) {
+      return false;
+    }
+    
+    return team1State.attributes.user_id === this._hass.user.id;
   }
 
   // Clear a specific pending form value when backend confirms the change
