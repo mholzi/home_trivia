@@ -143,6 +143,9 @@ The game features 7 mandatory categories across all difficulty levels:
 - Real-time answer tracking
 - Visual indication of answered teams
 - Points history and statistics
+- **Team Answer System**: Each team entity (sensor.home_trivia_team_X) stores the selected answer (A, B, or C) in the 'answer' attribute when a player assigned to that team makes a selection
+- **Automatic Answer Reset**: Team answers are automatically cleared when the 'Next Question' service is triggered, ensuring a clean state for each new question
+- **User-Team Assignment**: Players are assigned to teams through the user selection dropdowns, enabling personalized answer submission
 
 ## 🤖 Automated Scoring System
 

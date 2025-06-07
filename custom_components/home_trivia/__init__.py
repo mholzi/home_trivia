@@ -382,6 +382,16 @@ async def _register_services(hass: HomeAssistant) -> None:
         _LOGGER.info("Moving to next trivia question")
         
         entities = _get_entities()
+        team_sensors = entities.get("team_sensors", {})
+        
+        # Reset answer and answered status for all teams
+        for team_key, team_sensor in team_sensors.items():
+            if team_sensor and hasattr(team_sensor, 'update_team_answer') and hasattr(team_sensor, 'update_team_answered'):
+                team_sensor.update_team_answer(None)
+                team_sensor.update_team_answered(False)
+                _LOGGER.debug("Reset answer for %s", team_key)
+        
+        # Start countdown timer from configured timer length
         countdown_sensor = entities.get("countdown_sensor")
         countdown_current_sensor = entities.get("countdown_current_sensor")
         current_question_sensor = entities.get("current_question_sensor")

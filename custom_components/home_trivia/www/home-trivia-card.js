@@ -1685,9 +1685,39 @@ class HomeTriviaCard extends HTMLElement {
   }
 
   async selectAnswer(answer) {
-    // This would typically be called from team-specific UI
-    // For now, we'll just show it works
-    console.log('Answer selected:', answer);
+    if (!this._hass || !this._hass.user) {
+      console.warn('Cannot select answer: Home Assistant user not available');
+      return;
+    }
+
+    // Find which team the current user belongs to
+    const currentUserId = this._hass.user.id;
+    let userTeamId = null;
+
+    // Check each team to see if current user is assigned to it
+    for (let i = 1; i <= 5; i++) {
+      const teamState = this._hass.states[`sensor.home_trivia_team_${i}`];
+      if (teamState && teamState.attributes.user_id === currentUserId) {
+        userTeamId = `team_${i}`;
+        break;
+      }
+    }
+
+    if (!userTeamId) {
+      console.warn('Current user is not assigned to any team');
+      // Could show a user-friendly message here
+      return;
+    }
+
+    try {
+      await this._hass.callService('home_trivia', 'update_team_answer', {
+        team_id: userTeamId,
+        answer: answer
+      });
+      console.log(`Answer ${answer} selected for ${userTeamId}`);
+    } catch (error) {
+      console.error('Failed to submit answer:', error);
+    }
   }
 
   async nextQuestion() {
