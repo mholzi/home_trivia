@@ -348,12 +348,30 @@ class HomeTriviaCountdownCurrentSensor(SensorEntity):
                 self._is_running = False
                 self.async_write_ha_state()
                 _LOGGER.info("Countdown timer reached zero")
+                
+                # Trigger round scoring when timer expires
+                await self._trigger_round_scoring_on_timeout()
         except asyncio.CancelledError:
             _LOGGER.debug("Countdown timer task was cancelled")
         except Exception as e:
             _LOGGER.error("Error in countdown timer: %s", e)
             self._is_running = False
             self.async_write_ha_state()
+
+    async def _trigger_round_scoring_on_timeout(self) -> None:
+        """Trigger round scoring when timer expires."""
+        try:
+            # Get entities from hass data to trigger scoring
+            entities = self.hass.data.get(DOMAIN, {}).get("entities", {})
+            if entities:
+                # Import the scoring function from __init__.py
+                from . import _process_round_scoring
+                await _process_round_scoring(entities)
+                _LOGGER.info("Round scoring processed due to timer expiration")
+            else:
+                _LOGGER.warning("Could not find entities for round scoring on timeout")
+        except Exception as e:
+            _LOGGER.error("Error processing round scoring on timeout: %s", e)
 
     def start_countdown(self, initial_time: int) -> None:
         """Start the countdown timer."""

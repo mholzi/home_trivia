@@ -66,10 +66,12 @@ This means you can configure your entire trivia game setup smoothly in one sessi
 - **No manual setup needed** - Timer and progress bar work automatically when integration is installed
 
 ### 🏆 **Advanced Scoring**
+- **Automated Points Logic**: Scoring runs automatically when rounds end (no user setup needed)
 - **Base Points**: 10 points for correct answers
-- **Speed Bonus**: Extra points for quick responses
-- **High Score Tracking**: Both total points and average per round
-- **Round-by-round Statistics**
+- **Speed Bonus**: Extra points for quick responses (remaining seconds on timer)
+- **Round Results Tracking**: Detailed round-by-round answer history and correctness
+- **High Score Tracking**: Both total points and average per round with automatic updates
+- **Answer Reset**: Team answers automatically cleared for next round
 
 ### 🎨 **Beautiful Interface**
 - Modern, responsive Lovelace card
@@ -129,15 +131,44 @@ The game features 7 mandatory categories across all difficulty levels:
 - **Politics** - Government systems, political figures, and civic knowledge
 
 ### Scoring System
+- **Automated Scoring**: Points are automatically calculated and awarded when rounds end
 - **Correct Answer**: 10 base points
 - **Speed Bonus**: Time remaining on timer (e.g., 20 seconds left = +20 points)
-- **High Scores**: Tracked by average points per round
+- **Round Completion**: Scoring triggers when "Next Question" is pressed or timer expires
+- **Answer Reset**: Team answers are automatically cleared for the next round
+- **High Scores**: Tracked by average points per round with automatic updates
 
 ### Team Features
 - Custom or default team names
 - Real-time answer tracking
 - Visual indication of answered teams
 - Points history and statistics
+
+## 🤖 Automated Scoring System
+
+**Zero-Setup Required!** Home Trivia features a fully automated scoring system that works seamlessly in the background:
+
+### 🎯 **How It Works**
+- **Round End Detection**: Scoring automatically triggers when "Next Question" is pressed or timer expires
+- **Answer Comparison**: Each participating team's answer is compared to the correct answer from the current question
+- **Point Calculation**: 
+  - ✅ **Correct Answer**: 10 base points + speed bonus (remaining seconds on timer)
+  - ❌ **Incorrect/Missing**: 0 points
+- **Speed Bonus**: Rewards quick thinking with extra points equal to remaining timer seconds
+- **Automatic Updates**: Team points and round results update instantly
+
+### 📊 **Detailed Tracking**
+Each team entity automatically maintains:
+- **Current Points**: Running total updated after each round
+- **Last Round Results**: Answer given, correctness, and points earned
+- **Round History**: Complete record of performance for transparency
+
+### 🔄 **Round Management**
+- **Answer Reset**: Team answers automatically cleared for next round
+- **Round Counter**: Increments automatically to track game progress  
+- **High Score Updates**: Best scores updated automatically based on average points per round
+
+**No manual intervention needed!** The system runs entirely in the backend Python integration, providing a seamless experience for all players.
 
 ## 🔧 Configuration
 
@@ -198,7 +229,9 @@ Home Trivia exposes several services for automation:
 
 ### Team Sensors (1-5)
 - `sensor.home_trivia_team_X` - Team information and stats
-- Attributes: points, answer, answered status, participation
+- **Attributes**: points, answer, answered status, participation, user_id
+- **Round Results**: last_round_answer, last_round_correct, last_round_points
+- **Automated Updates**: Points and round results update automatically when rounds end
 
 ### Game Management
 - `sensor.home_trivia_round_counter` - Current round number
