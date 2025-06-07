@@ -1364,8 +1364,8 @@ class HomeTriviaCard extends HTMLElement {
         <div class="game-content">
           ${this.renderQuestionSection(currentQuestion, countdown)}
           ${this.renderTeamsSection()}
-          ${this.renderTeamManagement()}
           ${this.renderGameSettings()}
+          ${this.renderTeamManagement()}
           ${this.renderGameControls(gameStatus, countdown)}
         </div>
       </div>
