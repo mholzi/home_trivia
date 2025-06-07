@@ -1123,6 +1123,37 @@ class HomeTriviaCard extends HTMLElement {
           50% { transform: scale(1.05); opacity: 0.8; }
           100% { transform: scale(1); opacity: 1; }
         }
+        .countdown-progress-container {
+          margin: 10px auto 20px auto;
+          max-width: 300px;
+        }
+        .countdown-progress-bar {
+          width: 100%;
+          height: 8px;
+          background-color: var(--divider-color, #e0e0e0);
+          border-radius: 4px;
+          overflow: hidden;
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .countdown-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, var(--success-color, #4caf50), var(--primary-color, #2196f3));
+          border-radius: 4px;
+          transition: width 0.8s ease-out;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .countdown-timer.warning + .countdown-progress-container .countdown-progress-fill {
+          background: linear-gradient(90deg, var(--warning-color, #ff9800), var(--error-color, #f44336));
+        }
+        .countdown-timer.time-up + .countdown-progress-container .countdown-progress-fill {
+          background: var(--error-color, #f44336);
+          animation: progress-pulse 1s infinite;
+        }
+        @keyframes progress-pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
+        }
         .teams-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1374,6 +1405,17 @@ class HomeTriviaCard extends HTMLElement {
     const isRunning = countdown ? countdown.attributes.is_running : false;
     const isTimeUp = timeLeft <= 0;
     
+    // Get timer length for progress bar calculation
+    // First try to get initial time from countdown sensor attributes (more accurate)
+    // Fall back to timer sensor state for initial setup
+    const initialTime = countdown?.attributes?.initial_time;
+    const timerSensor = this._hass?.states['sensor.home_trivia_countdown_timer'];
+    const timerLength = initialTime || parseInt(timerSensor?.state || '30');
+    
+    // Calculate progress percentage (0-100)
+    const progressPercentage = isRunning && timerLength > 0 ? 
+      Math.max(0, Math.min(100, (timeLeft / timerLength) * 100)) : 0;
+    
     // Determine timer CSS classes based on time remaining
     let timerClasses = 'countdown-timer';
     let timerText = `${timeLeft}s`;
@@ -1388,6 +1430,11 @@ class HomeTriviaCard extends HTMLElement {
     let html = `
       <div class="question-section">
         <div class="${timerClasses}">${timerText}</div>
+        <div class="countdown-progress-container">
+          <div class="countdown-progress-bar">
+            <div class="countdown-progress-fill" style="width: ${progressPercentage}%"></div>
+          </div>
+        </div>
         <div class="question-title">${currentQuestion.attributes.category}</div>
         <div class="question-text">${currentQuestion.attributes.question}</div>
     `;
