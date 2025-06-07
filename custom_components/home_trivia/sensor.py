@@ -316,6 +316,7 @@ class HomeTriviaCountdownCurrentSensor(SensorEntity):
         self._current_time = 0
         self._is_running = False
         self._countdown_task = None
+        self._initial_time = 0  # Store initial time for progress calculation
 
     @property
     def state(self) -> int:
@@ -329,6 +330,7 @@ class HomeTriviaCountdownCurrentSensor(SensorEntity):
             "friendly_name": "Current Countdown",
             "unit_of_measurement": "seconds",
             "is_running": self._is_running,
+            "initial_time": self._initial_time,
         }
 
     async def _countdown_worker(self) -> None:
@@ -359,6 +361,7 @@ class HomeTriviaCountdownCurrentSensor(SensorEntity):
         self.stop_countdown()
         
         self._current_time = initial_time
+        self._initial_time = initial_time  # Store initial time for progress calculation
         self._is_running = True
         self.async_write_ha_state()
         
@@ -377,6 +380,7 @@ class HomeTriviaCountdownCurrentSensor(SensorEntity):
             self._countdown_task = None
         
         self._current_time = 0
+        self._initial_time = 0  # Reset initial time as well
         self.async_write_ha_state()
         _LOGGER.debug("Countdown timer stopped")
 
