@@ -97,6 +97,14 @@ class HomeTriviaCard extends HTMLElement {
            Object.keys(this._pendingFormValues.teamUserIds).length > 0;
   }
 
+  // Check if current user is admin (owner or admin)
+  isCurrentUserAdmin() {
+    if (!this._hass || !this._hass.user) {
+      return false;
+    }
+    return this._hass.user.is_owner === true || this._hass.user.is_admin === true;
+  }
+
   // Clear a specific pending form value when backend confirms the change
   clearPendingFormValue(key, subKey = null) {
     if (subKey) {
@@ -510,23 +518,6 @@ class HomeTriviaCard extends HTMLElement {
       }, 500); // Increased delay to prevent resets
     });
 
-    this.shadowRoot.getElementById('timer-select')?.addEventListener('change', (e) => {
-      // Store pending value optimistically
-      this._pendingFormValues.timerLength = e.target.value;
-      
-      // Persist timer length immediately
-      this.debouncedServiceCall('timer_length', () => {
-        this._hass.callService('home_trivia', 'update_countdown_timer_length', {
-          timer_length: parseInt(e.target.value)
-        }).then(() => {
-          // Clear pending value when backend confirms
-          this.clearPendingFormValue('timerLength');
-        }).catch(() => {
-          // Keep pending value on error - user can retry
-        });
-      }, 500); // Increased delay to prevent resets
-    });
-
     this.shadowRoot.getElementById('team-count-select')?.addEventListener('change', (e) => {
       const teamCount = parseInt(e.target.value);
       
@@ -555,15 +546,12 @@ class HomeTriviaCard extends HTMLElement {
 
     // Get current values from Home Assistant entities
     const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
-    const timerSensor = this._hass?.states['sensor.home_trivia_countdown_timer'];
     
     // Use effective values (pending local changes take precedence over HA entity values)
     const baseDifficulty = gameStatus?.attributes?.difficulty_level || 'Easy';
-    const baseTimerLength = timerSensor?.state || '30';
     const baseTeamCount = gameStatus?.attributes?.team_count || 2;
     
     const currentDifficulty = this.getEffectiveFormValue('difficulty', null, baseDifficulty);
-    const currentTimerLength = this.getEffectiveFormValue('timerLength', null, baseTimerLength);
     const currentTeamCount = this.getEffectiveFormValue('teamCount', null, baseTeamCount);
 
     // Difficulty Level Input
@@ -583,24 +571,6 @@ class HomeTriviaCard extends HTMLElement {
         <div class="difficulty-description" id="difficulty-description" style="margin-top: 8px; opacity: 0.8; font-style: italic;">
           ${this.getDifficultyDescription(currentDifficulty)}
         </div>
-      </div>
-    `;
-
-    // Timer Length Input
-    inputsHtml += `
-      <div class="splash-input-section">
-        <div class="splash-input-header">
-          <ha-icon icon="mdi:timer-outline" class="input-icon"></ha-icon>
-          <h3>Timer Length</h3>
-        </div>
-        <p class="input-description">How long teams have to answer each question</p>
-        <select class="form-select" id="timer-select">
-          <option value="15" ${currentTimerLength === '15' ? 'selected' : ''}>15 seconds</option>
-          <option value="20" ${currentTimerLength === '20' ? 'selected' : ''}>20 seconds</option>
-          <option value="30" ${currentTimerLength === '30' ? 'selected' : ''}>30 seconds</option>
-          <option value="45" ${currentTimerLength === '45' ? 'selected' : ''}>45 seconds</option>
-          <option value="60" ${currentTimerLength === '60' ? 'selected' : ''}>60 seconds</option>
-        </select>
       </div>
     `;
 
@@ -1014,7 +984,10 @@ class HomeTriviaCard extends HTMLElement {
 
   async startGame() {
     const difficulty = this.shadowRoot.getElementById('difficulty-select')?.value || 'Easy';
-    const timerLength = parseInt(this.shadowRoot.getElementById('timer-select')?.value || '30');
+    
+    // Get current timer length from Home Assistant entity (no longer reading from splash screen)
+    const timerSensor = this._hass?.states['sensor.home_trivia_countdown_timer'];
+    const timerLength = parseInt(timerSensor?.state || '30');
     
     // Get team count from Home Assistant entity instead of DOM
     const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
@@ -1339,12 +1312,13 @@ class HomeTriviaCard extends HTMLElement {
           ${this.renderQuestionSection(currentQuestion, countdown)}
           ${this.renderTeamsSection()}
           ${this.renderTeamManagement()}
+          ${this.renderGameSettings()}
           ${this.renderGameControls(gameStatus)}
         </div>
       </div>
     `;
     
-    // Add event listeners for team management
+    // Add event listeners for team management and game settings
     setTimeout(() => {
       const teamCountSelect = this.shadowRoot.getElementById('main-team-count-select');
       if (teamCountSelect) {
@@ -1360,6 +1334,27 @@ class HomeTriviaCard extends HTMLElement {
           
           // Update team setup display immediately (same logic as splash screen)
           this.updateMainTeamSetup(teamCount);
+        });
+      }
+
+      // Add event listener for game settings timer
+      const gameSettingsTimerSelect = this.shadowRoot.getElementById('game-settings-timer-select');
+      if (gameSettingsTimerSelect) {
+        gameSettingsTimerSelect.addEventListener('change', (e) => {
+          // Store pending value optimistically
+          this._pendingFormValues.timerLength = e.target.value;
+          
+          // Persist timer length immediately
+          this.debouncedServiceCall('game_settings_timer_length', () => {
+            this._hass.callService('home_trivia', 'update_countdown_timer_length', {
+              timer_length: parseInt(e.target.value)
+            }).then(() => {
+              // Clear pending value when backend confirms
+              this.clearPendingFormValue('timerLength');
+            }).catch(() => {
+              // Keep pending value on error - user can retry
+            });
+          }, 500); // Same delay as splash screen
         });
       }
     }, 0);
@@ -1535,6 +1530,61 @@ class HomeTriviaCard extends HTMLElement {
     this.requestUpdate();
   }
 
+  toggleGameSettings() {
+    this.gameSettingsExpanded = !this.gameSettingsExpanded;
+    this.requestUpdate();
+  }
+
+  renderGameSettings() {
+    // Only show game settings to admin users
+    if (!this.isCurrentUserAdmin()) {
+      return '';
+    }
+
+    const isExpanded = this.gameSettingsExpanded;
+    
+    return `
+      <div class="team-management-section">
+        <div class="section-header" onclick="this.getRootNode().host.toggleGameSettings()">
+          <h3>⚙️ Game Settings</h3>
+          <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
+        </div>
+        ${isExpanded ? this.renderGameSettingsContent() : ''}
+      </div>
+    `;
+  }
+
+  renderGameSettingsContent() {
+    // Get current timer length from Home Assistant entity
+    const timerSensor = this._hass?.states['sensor.home_trivia_countdown_timer'];
+    const currentTimerLength = this.getEffectiveFormValue('timerLength', null, timerSensor?.state || '30');
+    
+    return `
+      <div class="team-management-content">
+        <div class="game-reset-section" style="margin-bottom: 20px;">
+          <button class="control-button secondary-button" onclick="this.getRootNode().host.resetGame()" style="width: 100%;">
+            🔄 Reset Game
+          </button>
+        </div>
+        
+        <div class="timer-section">
+          <div class="management-input-header">
+            <ha-icon icon="mdi:timer-outline" class="input-icon"></ha-icon>
+            <h4>Timer Length</h4>
+          </div>
+          <p class="input-description">How long teams have to answer each question</p>
+          <select class="form-select" id="game-settings-timer-select">
+            <option value="15" ${currentTimerLength === '15' ? 'selected' : ''}>15 seconds</option>
+            <option value="20" ${currentTimerLength === '20' ? 'selected' : ''}>20 seconds</option>
+            <option value="30" ${currentTimerLength === '30' ? 'selected' : ''}>30 seconds</option>
+            <option value="45" ${currentTimerLength === '45' ? 'selected' : ''}>45 seconds</option>
+            <option value="60" ${currentTimerLength === '60' ? 'selected' : ''}>60 seconds</option>
+          </select>
+        </div>
+      </div>
+    `;
+  }
+
   renderGameControls(gameStatus) {
     const isPlaying = gameStatus && gameStatus.state === 'playing';
     
@@ -1543,18 +1593,11 @@ class HomeTriviaCard extends HTMLElement {
         <button class="control-button primary-button" onclick="this.getRootNode().host.nextQuestion()">
           ▶️ Next Question
         </button>
-        ${isPlaying ? `
-          <button class="control-button secondary-button" onclick="this.getRootNode().host.stopGame()">
-            ⏹️ Stop Game
-          </button>
-        ` : `
+        ${!isPlaying ? `
           <button class="control-button secondary-button" onclick="this.getRootNode().host.startNewGame()">
             🚀 Start New Game
           </button>
-        `}
-        <button class="control-button secondary-button" onclick="this.getRootNode().host.resetGame()">
-          🔄 Reset Game
-        </button>
+        ` : ''}
       </div>
     `;
   }
