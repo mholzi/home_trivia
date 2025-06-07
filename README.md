@@ -38,6 +38,8 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 
 This means you can configure your entire trivia game setup smoothly in one session, without frustrating input reversions or having to re-enter the same information multiple times.
 
+**Enhanced Admin Controls:** Home Assistant administrators now have access to exclusive Game Settings during gameplay, providing streamlined controls for timer adjustments and game management without cluttering the interface for regular players.
+
 ## ✨ Features
 
 ### 🎮 **Multiple Difficulty Levels**
@@ -68,6 +70,7 @@ This means you can configure your entire trivia game setup smoothly in one sessi
 - Mobile-friendly design with QR code for easy device access
 - Intuitive splash screen for easy setup
 - Real-time game status updates
+- **Admin-only Game Settings** - Dedicated settings panel for timer controls and game management (visible only to Home Assistant admins/owners)
 
 ## 🚀 Quick Start
 
@@ -135,10 +138,18 @@ The integration supports configuration through the UI with **automatic persisten
 All game setup parameters are **automatically saved** and restored across Home Assistant restarts:
 - **Difficulty Level**: Choose question complexity - *setting is remembered*
 - **Team Count**: 1-5 participating teams - *setting is remembered*  
-- **Timer Length**: 10-120 seconds per question - *setting is remembered*
+- **Timer Length**: 10-120 seconds per question - *setting is remembered* (configurable via admin-only Game Settings)
 - **Team Names**: Custom or default names for each team - *names are remembered*
 
 **No manual configuration required!** Simply set your preferences once on the splash screen, and they'll be automatically restored every time you use Home Trivia, even after Home Assistant restarts or reloads.
+
+### ⚙️ Admin Game Settings (New!)
+Home Assistant administrators and owners have access to an exclusive **Game Settings** section that includes:
+- **Timer Length Control**: Adjust question timer from 15-60 seconds during gameplay
+- **Reset Game**: Convenient reset button to restart the entire game session
+- **Admin-Only Access**: Only visible to users with admin or owner privileges in Home Assistant
+
+The Game Settings section provides streamlined game management tools while keeping the interface clean for regular players.
 
 ### Configuration Options
 - **Difficulty Levels**: Kids, Easy, Medium, Hard
@@ -150,7 +161,7 @@ All game setup parameters are **automatically saved** and restored across Home A
 
 Home Trivia exposes several services for automation:
 - `home_trivia.start_game` - Start a new game
-- `home_trivia.stop_game` - Stop current game  
+- `home_trivia.stop_game` - Stop current game (available for automation, UI button removed for cleaner interface)
 - `home_trivia.next_question` - Move to next question
 - `home_trivia.update_team_answer` - Submit team answer
 - `home_trivia.update_difficulty_level` - Change difficulty
