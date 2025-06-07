@@ -336,7 +336,7 @@ async def _register_services(hass: HomeAssistant) -> None:
             hass.states.async_set("sensor.home_trivia_game_status", "stopped")
 
     async def reset_game(call):
-        _LOGGER.info("Resetting Home Trivia game")
+        _LOGGER.info("Resetting Home Trivia game - preserving user setup")
         entities = _get_entities()
         
         # Stop any countdown timer
@@ -344,22 +344,35 @@ async def _register_services(hass: HomeAssistant) -> None:
         if countdown_current_sensor and hasattr(countdown_current_sensor, 'stop_countdown'):
             countdown_current_sensor.stop_countdown()
         
-        # Reset game status
+        # Reset game status to ready (preserving other attributes like difficulty, timer_length, team_count)
         main_sensor = entities.get("main_sensor")
         if main_sensor and hasattr(main_sensor, 'set_state'):
             main_sensor.set_state("ready")
         else:
             hass.states.async_set("sensor.home_trivia_game_status", "ready")
         
-        # Reset all teams
+        # Reset round counter to 0
+        round_counter_sensor = entities.get("round_counter_sensor")
+        if round_counter_sensor and hasattr(round_counter_sensor, 'reset_round_counter'):
+            round_counter_sensor.reset_round_counter()
+        else:
+            hass.states.async_set("sensor.home_trivia_round_counter", 0)
+        
+        # Reset played questions list
+        played_questions_sensor = entities.get("played_questions_sensor")
+        if played_questions_sensor and hasattr(played_questions_sensor, 'reset_played_questions'):
+            played_questions_sensor.reset_played_questions()
+        else:
+            hass.states.async_set("sensor.home_trivia_played_questions", 0, {"played_question_ids": []})
+        
+        # Reset only gameplay progress for teams, preserving setup (names, user_ids, participation)
         team_sensors = entities.get("team_sensors", {})
         for i in range(1, 6):
             team_key = f"home_trivia_team_{i}"
             team_sensor = team_sensors.get(team_key)
             if team_sensor:
-                team_sensor.update_team_name(f"Team {i}")
+                # Only reset gameplay-related attributes, preserve team setup
                 team_sensor.update_team_points(0)
-                team_sensor.update_team_participating(True)
                 if hasattr(team_sensor, 'update_team_answer'):
                     team_sensor.update_team_answer(None)
                 if hasattr(team_sensor, 'update_team_answered'):
@@ -367,16 +380,32 @@ async def _register_services(hass: HomeAssistant) -> None:
                 if hasattr(team_sensor, '_last_round_answer'):
                     team_sensor._last_round_answer = None
                     team_sensor.async_write_ha_state()
-                if hasattr(team_sensor, 'update_team_user_id'):
-                    team_sensor.update_team_user_id(None)
+                # Do NOT reset team_name, user_id, or participating status
             else:
-                # Fallback to direct state setting
+                # Fallback to direct state setting - preserve existing name and user_id
                 team_entity_id = f"sensor.home_trivia_team_{i}"
-                hass.states.async_set(team_entity_id, f"Team {i}", {
-                    "points": 0,
-                    "participating": True,
-                    "team_number": i
-                })
+                current_state = hass.states.get(team_entity_id)
+                if current_state:
+                    # Preserve current name, user_id, and participating status
+                    current_attrs = dict(current_state.attributes) if current_state.attributes else {}
+                    current_attrs.update({
+                        "points": 0,
+                        "answer": None,
+                        "answered": False,
+                        "last_round_answer": None,
+                        "last_round_correct": None,
+                        "last_round_points": 0,
+                    })
+                    hass.states.async_set(team_entity_id, current_state.state, current_attrs)
+                else:
+                    # Entity doesn't exist, create with defaults
+                    hass.states.async_set(team_entity_id, f"Team {i}", {
+                        "points": 0,
+                        "participating": True,
+                        "team_number": i,
+                        "answer": None,
+                        "answered": False,
+                    })
 
     async def next_question(call):
         _LOGGER.info("Moving to next trivia question")

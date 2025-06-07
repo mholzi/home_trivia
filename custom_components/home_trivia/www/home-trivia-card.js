@@ -1366,7 +1366,7 @@ class HomeTriviaCard extends HTMLElement {
           ${this.renderTeamsSection()}
           ${this.renderTeamManagement()}
           ${this.renderGameSettings()}
-          ${this.renderGameControls(gameStatus)}
+          ${this.renderGameControls(gameStatus, countdown)}
         </div>
       </div>
     `;
@@ -1667,8 +1667,14 @@ class HomeTriviaCard extends HTMLElement {
     `;
   }
 
-  renderGameControls(gameStatus) {
+  renderGameControls(gameStatus, countdown) {
     const isPlaying = gameStatus && gameStatus.state === 'playing';
+    const isTimerRunning = countdown && countdown.attributes && countdown.attributes.is_running;
+    
+    // Hide controls when timer is running (during active question countdown)
+    if (isTimerRunning) {
+      return '';
+    }
     
     return `
       <div class="game-controls">
@@ -1733,10 +1739,9 @@ class HomeTriviaCard extends HTMLElement {
   }
 
   async startNewGame() {
-    // Reset the game first to restore default team names, which will trigger the splash screen
-    await this.resetGame();
-    // The splash screen will appear automatically on the next render cycle
-    // because resetGame() will restore default team names, making shouldShowSplashScreen() return true
+    // Start a completely new game which resets everything including team setup
+    await this._hass.callService('home_trivia', 'start_game', {});
+    // This will reset all team names to defaults and show the splash screen for setup
   }
 
   getCardSize() {
