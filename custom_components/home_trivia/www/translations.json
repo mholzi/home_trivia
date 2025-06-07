@@ -40,6 +40,7 @@
     "difficultySelectionHint": "Choose your challenge level",
     "teamCountHint": "How many teams will play?",
     "teamSetupHint": "Name your teams and assign players",
+    "timerLengthHint": "How long teams have to answer each question",
     "startGameButton": "🚀 Start Game",
     "notReady": "Complete setup to start",
     "ready": "Ready to play!"
@@ -85,6 +86,7 @@
     "difficultySelectionHint": "Wählen Sie Ihren Schwierigkeitsgrad",
     "teamCountHint": "Wie viele Teams werden spielen?",
     "teamSetupHint": "Benennen Sie Ihre Teams und weisen Sie Spieler zu",
+    "timerLengthHint": "Wie lange haben Teams Zeit, um jede Frage zu beantworten",
     "startGameButton": "🚀 Spiel starten",
     "notReady": "Setup vervollständigen zum Starten",
     "ready": "Bereit zum Spielen!"

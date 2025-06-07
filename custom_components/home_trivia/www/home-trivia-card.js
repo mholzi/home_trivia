@@ -512,35 +512,56 @@ class HomeTriviaCard extends HTMLElement {
         }
         
         @media (max-width: 768px) {
+          .splash-screen {
+            padding: 24px 16px;
+            min-height: 400px;
+          }
+          .splash-title {
+            font-size: 2.2em;
+          }
+          .splash-subtitle {
+            font-size: 1em;
+          }
+          .splash-input-section {
+            padding: 20px 16px;
+            margin-bottom: 16px;
+          }
+          .splash-input-header h3 {
+            font-size: 1.1em;
+          }
           .splash-team-item {
             grid-template-columns: 1fr;
             text-align: center;
             gap: 8px;
           }
-          
           .team-label {
             text-align: center;
           }
-          
-          .splash-title {
-            font-size: 2em;
-          }
-          
-          .splash-subtitle {
-            font-size: 1em;
-          }
-          
           .splash-qr-section {
             margin: 15px 0;
             padding: 15px;
           }
-          
           .qr-header h3 {
             font-size: 1.1em;
           }
-          
           .qr-header p {
             font-size: 0.8em;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .splash-screen {
+            padding: 20px 12px;
+          }
+          .splash-title {
+            font-size: 1.8em;
+          }
+          .splash-input-section {
+            padding: 16px 12px;
+          }
+          .form-select, .splash-team-input, .splash-team-select {
+            padding: 14px 16px;
+            font-size: 15px;
           }
         }
       </style>
@@ -1348,72 +1369,106 @@ class HomeTriviaCard extends HTMLElement {
         }
         .game-controls {
           display: flex;
-          gap: 10px;
+          gap: 16px;
           justify-content: center;
           flex-wrap: wrap;
+          margin-top: 32px;
         }
         .control-button {
-          padding: 10px 20px;
+          padding: 16px 32px;
           border: none;
-          border-radius: 6px;
+          border-radius: 12px;
           cursor: pointer;
-          font-weight: bold;
-          transition: all 0.2s;
+          font-weight: 700;
+          font-size: 1.1em;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          position: relative;
+          overflow: hidden;
+        }
+        .control-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          transition: left 0.5s;
+        }
+        .control-button:hover::before {
+          left: 100%;
         }
         .primary-button {
-          background: var(--primary-color);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
         }
         .secondary-button {
-          background: var(--secondary-color, #ccc);
-          color: var(--primary-text-color);
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          color: white;
         }
         .control-button:hover {
-          opacity: 0.8;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        .control-button:active {
+          transform: translateY(0);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
         .fun-fact {
-          background: var(--info-color, #e3f2fd);
-          padding: 15px;
-          border-radius: 8px;
-          margin-top: 20px;
-          border-left: 4px solid var(--primary-color);
+          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+          padding: 20px;
+          border-radius: 16px;
+          margin-top: 24px;
+          border-left: 4px solid #667eea;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
         }
         .fun-fact-title {
-          font-weight: bold;
-          margin-bottom: 10px;
+          font-weight: 700;
+          margin-bottom: 12px;
           color: var(--primary-text-color);
+          font-size: 1.1em;
         }
         .team-management-section {
-          border: 1px solid var(--divider-color);
-          border-radius: 8px;
-          margin-bottom: 20px;
+          border: none;
+          border-radius: 16px;
+          margin-bottom: 24px;
           overflow: hidden;
+          background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(248,250,252,0.9) 100%);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+          backdrop-filter: blur(10px);
         }
         .section-header {
-          background: var(--secondary-background-color, #f5f5f5);
-          padding: 15px;
+          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+          padding: 20px 24px;
           cursor: pointer;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          transition: background-color 0.2s;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          border-bottom: 1px solid rgba(102, 126, 234, 0.1);
         }
         .section-header:hover {
-          background: var(--divider-color, #e0e0e0);
+          background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+          transform: translateY(-1px);
         }
         .section-header h3 {
           margin: 0;
           color: var(--primary-text-color);
-          font-size: 1.1em;
+          font-size: 1.2em;
+          font-weight: 700;
         }
         .expand-icon {
-          font-size: 1.2em;
-          color: var(--primary-color);
-          transition: transform 0.2s;
+          font-size: 1.3em;
+          color: #667eea;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          font-weight: bold;
         }
         .team-management-content {
-          padding: 20px;
-          background: var(--card-background-color, white);
+          padding: 24px;
+          background: rgba(255, 255, 255, 0.7);
         }
         .team-count-section, .team-setup-section {
           margin-bottom: 20px;
@@ -1421,17 +1476,17 @@ class HomeTriviaCard extends HTMLElement {
         .management-input-header {
           display: flex;
           align-items: center;
-          margin-bottom: 8px;
+          margin-bottom: 12px;
         }
         .management-input-header h4 {
-          margin: 0 0 0 8px;
-          font-size: 1em;
-          font-weight: 600;
+          margin: 0 0 0 12px;
+          font-size: 1.1em;
+          font-weight: 700;
           color: var(--primary-text-color);
         }
         .management-input-header .input-icon {
-          --mdc-icon-size: 18px;
-          color: var(--primary-color);
+          --mdc-icon-size: 20px;
+          color: #667eea;
         }
         .input-description {
           margin: 0 0 12px 0;
@@ -1485,6 +1540,53 @@ class HomeTriviaCard extends HTMLElement {
           }
           .main-team-item .team-label {
             text-align: center;
+          }
+        }
+        
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 480px) {
+          .game-header {
+            padding: 24px 16px;
+          }
+          .game-title {
+            font-size: 1.8em;
+          }
+          .game-content {
+            padding: 24px 16px;
+          }
+          .question-title {
+            font-size: 1.3em;
+          }
+          .question-text {
+            font-size: 1.1em;
+          }
+          .answer-button {
+            padding: 16px 20px;
+            font-size: 1em;
+          }
+          .teams-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+          .team-card {
+            padding: 20px 16px;
+          }
+          .control-button {
+            padding: 14px 24px;
+            font-size: 1em;
+          }
+          .game-controls {
+            flex-direction: column;
+            gap: 12px;
+          }
+          .game-controls .control-button {
+            width: 100%;
+          }
+          .section-header {
+            padding: 16px 20px;
+          }
+          .team-management-content {
+            padding: 20px 16px;
           }
         }
       </style>
@@ -1810,7 +1912,7 @@ class HomeTriviaCard extends HTMLElement {
             <ha-icon icon="mdi:timer-outline" class="input-icon"></ha-icon>
             <h4>${this.t('timerLength')}</h4>
           </div>
-          <p class="input-description">How long teams have to answer each question</p>
+          <p class="input-description">${this.t('timerLengthHint')}</p>
           <select class="form-select" id="game-settings-timer-select">
             <option value="15" ${currentTimerLength === '15' ? 'selected' : ''}>15 ${this.t('seconds')}</option>
             <option value="20" ${currentTimerLength === '20' ? 'selected' : ''}>20 ${this.t('seconds')}</option>
