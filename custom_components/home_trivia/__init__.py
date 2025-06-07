@@ -88,6 +88,143 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     return True
 
+async def _process_round_scoring(entities: dict) -> None:
+    """Process scoring for the current round before moving to next question."""
+    
+    # Get the current question to check if we have a round to score
+    current_question_sensor = entities.get("current_question_sensor")
+    if not current_question_sensor or not hasattr(current_question_sensor, '_current_question'):
+        _LOGGER.debug("No current question found, skipping round scoring")
+        return
+    
+    current_question = current_question_sensor._current_question
+    if not current_question:
+        _LOGGER.debug("No current question data, skipping round scoring")
+        return
+    
+    correct_answer = current_question.get("correct_answer")
+    if not correct_answer:
+        _LOGGER.warning("No correct answer found for current question, skipping scoring")
+        return
+    
+    _LOGGER.info("Processing round scoring for question: %s", current_question.get("question", "Unknown"))
+    
+    # Get remaining time for speed bonus calculation
+    countdown_current_sensor = entities.get("countdown_current_sensor")
+    remaining_time = 0
+    if countdown_current_sensor and hasattr(countdown_current_sensor, '_current_time'):
+        remaining_time = max(0, countdown_current_sensor._current_time)
+    
+    _LOGGER.debug("Speed bonus time remaining: %d seconds", remaining_time)
+    
+    # Get team sensors and main sensor for team count
+    team_sensors = entities.get("team_sensors", {})
+    main_sensor = entities.get("main_sensor")
+    
+    # Determine participating teams
+    team_count = 5  # Default to all teams
+    if main_sensor and hasattr(main_sensor, '_team_count'):
+        team_count = main_sensor._team_count
+    
+    # Process scoring for each participating team
+    for i in range(1, team_count + 1):
+        team_key = f"home_trivia_team_{i}"
+        team_sensor = team_sensors.get(team_key)
+        
+        if not team_sensor:
+            _LOGGER.warning("Team sensor %s not found, skipping", team_key)
+            continue
+            
+        # Check if team is participating
+        if not getattr(team_sensor, '_participating', True):
+            _LOGGER.debug("Team %d not participating, skipping", i)
+            continue
+        
+        # Get team's answer
+        team_answer = getattr(team_sensor, '_answer', None)
+        _LOGGER.debug("Team %d answer: %s, correct: %s", i, team_answer, correct_answer)
+        
+        # Calculate points
+        points_earned = 0
+        is_correct = False
+        
+        if team_answer and team_answer.upper() == correct_answer.upper():
+            is_correct = True
+            points_earned = 10 + remaining_time  # 10 base points + speed bonus
+            _LOGGER.info("Team %d answered correctly! Earned %d points (10 base + %d speed bonus)", 
+                        i, points_earned, remaining_time)
+        else:
+            _LOGGER.info("Team %d answered incorrectly or didn't answer (answer: %s)", i, team_answer)
+        
+        # Update team with round results
+        if hasattr(team_sensor, 'add_points') and points_earned > 0:
+            team_sensor.add_points(points_earned)
+        
+        if hasattr(team_sensor, 'set_last_round_result'):
+            team_sensor.set_last_round_result(
+                answer=team_answer or "No Answer",
+                correct=is_correct, 
+                points=points_earned
+            )
+        
+        # Reset team answer and answered status for next round
+        if hasattr(team_sensor, 'update_team_answer'):
+            team_sensor.update_team_answer(None)
+        if hasattr(team_sensor, 'update_team_answered'):
+            team_sensor.update_team_answered(False)
+    
+    # Increment round counter
+    round_counter_sensor = entities.get("round_counter_sensor")
+    if round_counter_sensor and hasattr(round_counter_sensor, 'increment_round'):
+        round_counter_sensor.increment_round()
+        _LOGGER.debug("Incremented round counter")
+    
+    # Update high scores
+    await _update_high_scores(entities)
+
+
+async def _update_high_scores(entities: dict) -> None:
+    """Update high scores based on current team performance."""
+    
+    team_sensors = entities.get("team_sensors", {})
+    highscore_sensor = entities.get("highscore_sensor")
+    round_counter_sensor = entities.get("round_counter_sensor")
+    main_sensor = entities.get("main_sensor")
+    
+    if not highscore_sensor or not round_counter_sensor:
+        _LOGGER.debug("Missing highscore or round counter sensor, skipping high score update")
+        return
+    
+    # Get current round count
+    rounds_played = getattr(round_counter_sensor, '_round_count', 0)
+    if rounds_played <= 0:
+        return
+    
+    # Determine participating teams
+    team_count = 5  # Default to all teams
+    if main_sensor and hasattr(main_sensor, '_team_count'):
+        team_count = main_sensor._team_count
+    
+    # Check each team for new high scores
+    for i in range(1, team_count + 1):
+        team_key = f"home_trivia_team_{i}"
+        team_sensor = team_sensors.get(team_key)
+        
+        if not team_sensor:
+            continue
+            
+        # Check if team is participating
+        if not getattr(team_sensor, '_participating', True):
+            continue
+        
+        team_name = getattr(team_sensor, '_team_name', f"Team {i}")
+        team_points = getattr(team_sensor, '_points', 0)
+        
+        # Update high score if this is a new record
+        if hasattr(highscore_sensor, 'update_highscore'):
+            highscore_sensor.update_highscore(team_name, team_points, rounds_played)
+
+
 async def _register_services(hass: HomeAssistant) -> None:
     """Register all `home_trivia.*` services (start_game, stop_game, etc.)."""
 
@@ -244,7 +381,6 @@ async def _register_services(hass: HomeAssistant) -> None:
     async def next_question(call):
         _LOGGER.info("Moving to next trivia question")
         
-        # Reset all team answers when moving to next question
         entities = _get_entities()
         team_sensors = entities.get("team_sensors", {})
         
@@ -259,6 +395,9 @@ async def _register_services(hass: HomeAssistant) -> None:
         countdown_sensor = entities.get("countdown_sensor")
         countdown_current_sensor = entities.get("countdown_current_sensor")
         current_question_sensor = entities.get("current_question_sensor")
+        
+        # Process scoring from the previous round (if there was one)
+        await _process_round_scoring(entities)
         
         try:
             questions_file = os.path.join(os.path.dirname(__file__), "questions.json")

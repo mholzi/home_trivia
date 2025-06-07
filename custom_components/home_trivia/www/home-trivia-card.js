@@ -1197,6 +1197,21 @@ class HomeTriviaCard extends HTMLElement {
           background: var(--warning-color, orange);
           color: white;
         }
+        .team-last-round {
+          padding: 3px 8px;
+          border-radius: 10px;
+          font-size: 0.8em;
+          margin-top: 5px;
+          font-style: italic;
+        }
+        .team-correct {
+          background: var(--success-color, #4CAF50);
+          color: white;
+        }
+        .team-incorrect {
+          background: var(--error-color, #f44336);
+          color: white;
+        }
         .game-controls {
           display: flex;
           gap: 10px;
@@ -1492,6 +1507,11 @@ class HomeTriviaCard extends HTMLElement {
       const answered = team.attributes.answered;
       const answer = team.attributes.answer;
       const points = team.attributes.points || 0;
+      
+      // Round results for transparency
+      const lastRoundAnswer = team.attributes.last_round_answer;
+      const lastRoundCorrect = team.attributes.last_round_correct;
+      const lastRoundPoints = team.attributes.last_round_points || 0;
 
       html += `
         <div class="team-card">
@@ -1499,9 +1519,17 @@ class HomeTriviaCard extends HTMLElement {
           <div class="team-points">${points} points</div>
           <div class="team-answer ${answered ? 'team-answered' : 'team-not-answered'}">
             ${answered ? `Answer: ${answer}` : 'Not answered'}
-          </div>
-        </div>
-      `;
+          </div>`;
+      
+      // Show last round results if available
+      if (lastRoundAnswer) {
+        html += `
+          <div class="team-last-round ${lastRoundCorrect ? 'team-correct' : 'team-incorrect'}">
+            Last: ${lastRoundAnswer} (${lastRoundCorrect ? '✓' : '✗'}) +${lastRoundPoints}pts
+          </div>`;
+      }
+      
+      html += `</div>`;
     }
     
     html += '</div>';
