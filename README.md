@@ -14,7 +14,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 ✅ **Lovelace Card Included** - Beautiful UI card automatically available after installation  
 ✅ **Mobile Optimized** - Perfect for party gaming on phones and tablets with QR code for easy access  
 ✅ **Multiple Difficulty Levels** - From kids to intellectuals, everyone can play  
-✅ **Team Competition** - Support for up to 5 teams with custom names  
+✅ **Team Competition** - Support for up to 5 teams with custom or default names  
 ✅ **Smart Scoring** - Base points plus speed bonuses keep games exciting  
 ✅ **Persistent Settings** - Your game preferences are automatically saved and restored  
 
@@ -35,7 +35,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 - **🧠 Hard Level** - University-level knowledge for true intellectuals
 
 ### 👥 **Team Competition** 
-- Support for 1-5 teams with custom names
+- Support for 1-5 teams with custom or default names
 - Real-time scoring with speed bonuses
 - Visual feedback when teams answer
 - Comprehensive team management
@@ -86,6 +86,7 @@ type: custom:home-trivia-card
 ## 🎯 How to Play
 
 1. **Setup**: Configure teams, difficulty, and timer in the splash screen *(settings automatically saved)*
+   - Teams can keep their default names (Team 1, Team 2, etc.) or be customized
 2. **Start Game**: Click "Start Trivia Game" to begin
 3. **Answer Questions**: Teams select A, B, or C for each question
 4. **Scoring**: Get 10 base points + speed bonus for correct answers
@@ -111,7 +112,7 @@ The game features 7 mandatory categories across all difficulty levels:
 - **High Scores**: Tracked by average points per round
 
 ### Team Features
-- Custom team names
+- Custom or default team names
 - Real-time answer tracking
 - Visual indication of answered teams
 - Points history and statistics
@@ -125,7 +126,7 @@ All game setup parameters are **automatically saved** and restored across Home A
 - **Difficulty Level**: Choose question complexity - *setting is remembered*
 - **Team Count**: 1-5 participating teams - *setting is remembered*  
 - **Timer Length**: 10-120 seconds per question - *setting is remembered*
-- **Team Names**: Custom names for each team - *names are remembered*
+- **Team Names**: Custom or default names for each team - *names are remembered*
 
 **No manual configuration required!** Simply set your preferences once on the splash screen, and they'll be automatically restored every time you use Home Trivia, even after Home Assistant restarts or reloads.
 
@@ -133,7 +134,7 @@ All game setup parameters are **automatically saved** and restored across Home A
 - **Difficulty Levels**: Kids, Easy, Medium, Hard
 - **Team Count**: 1 to 5 teams maximum
 - **Timer Range**: 10 to 120 seconds per question
-- **Team Customization**: Custom names and participation status
+- **Team Customization**: Custom or default names and participation status
 
 ## 🎮 Services
 

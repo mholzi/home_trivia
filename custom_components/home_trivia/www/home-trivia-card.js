@@ -65,14 +65,6 @@ class HomeTriviaCard extends HTMLElement {
     
     if (!gameStatus || !team1) return true;
 
-    // Check if teams have names
-    for (let i = 1; i <= 5; i++) {
-      const team = hassToCheck.states[`sensor.home_trivia_team_${i}`];
-      if (team && team.attributes.participating && team.state === `Team ${i}`) {
-        return true; // Default name detected, show splash
-      }
-    }
-
     return false;
   }
 
