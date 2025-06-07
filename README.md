@@ -16,7 +16,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 ✅ **Multiple Difficulty Levels** - From kids to intellectuals, everyone can play  
 ✅ **Team Competition** - Support for up to 5 teams with custom or default names  
 ✅ **Smart Scoring** - Base points plus speed bonuses keep games exciting  
-✅ **Persistent Settings** - Your game preferences are automatically saved and restored  
+✅ **Persistent Settings** - Your game preferences are automatically saved and restored with optimistic UI updates  
 
 **Getting Started is Simple:**
 1. Install via HACS or manually
@@ -25,6 +25,18 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 4. Start playing immediately!
 
 *No technical expertise needed - if you can install Home Assistant integrations, you can run Home Trivia!*
+
+## 🚀 Enhanced User Experience
+
+**Optimistic UI for Seamless Setup:** Home Trivia now features a responsive, intuitive interface that provides immediate feedback during configuration. When you make changes to game settings like difficulty level, timer duration, or team setup, your selections are instantly reflected in the UI and maintained while the backend processes your changes.
+
+**Key UI Improvements:**
+- **Instant Response** - Dropdowns and inputs respond immediately to your selections
+- **No Input Reverting** - Your choices stay locked in while being saved to Home Assistant
+- **Smart Re-rendering** - The interface only updates when necessary, preserving your active editing sessions
+- **Persistent Form State** - Partially completed configurations are maintained even if the backend is busy
+
+This means you can configure your entire trivia game setup smoothly in one session, without frustrating input reversions or having to re-enter the same information multiple times.
 
 ## ✨ Features
 
@@ -85,8 +97,6 @@ type: custom:home-trivia-card
 
 ## 🎯 How to Play
 
-1. **Setup**: Configure teams, difficulty, and timer in the splash screen *(settings automatically saved)*
-   - Teams can keep their default names (Team 1, Team 2, etc.) or be customized
 2. **Start Game**: Click "Start Trivia Game" to begin
 3. **Answer Questions**: Teams select A, B, or C for each question
 4. **Scoring**: Get 10 base points + speed bonus for correct answers
