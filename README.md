@@ -54,8 +54,11 @@ This means you can configure your entire trivia game setup smoothly in one sessi
 
 ### ⏱️ **Smart Timing System**
 - Configurable countdown timer (10-120 seconds)
+- **Automatic countdown** - Timer decreases live every second
+- **Visual feedback** - Red pulsing animation when time is up, orange warning for last 5 seconds
 - Speed bonus points based on remaining time
 - Automatic progression and round management
+- **No manual setup needed** - Timer works automatically when integration is installed
 
 ### 🏆 **Advanced Scoring**
 - **Base Points**: 10 points for correct answers
@@ -67,6 +70,8 @@ This means you can configure your entire trivia game setup smoothly in one sessi
 - Modern, responsive Lovelace card
 - Mobile-friendly design with QR code for easy device access
 - Intuitive splash screen for easy setup
+- **Live countdown timer** with automatic updates every second
+- **Visual timer feedback** - Changes color and animation when time runs out
 - Real-time game status updates
 
 ## 🚀 Quick Start
@@ -144,7 +149,15 @@ All game setup parameters are **automatically saved** and restored across Home A
 - **Difficulty Levels**: Kids, Easy, Medium, Hard
 - **Team Count**: 1 to 5 teams maximum
 - **Timer Range**: 10 to 120 seconds per question
+- **Automatic Countdown**: Timer decrements live every second with visual feedback
 - **Team Customization**: Custom or default names and participation status
+
+### 🔥 Live Timer Features
+The countdown timer now works **automatically** with no setup required:
+- **Real-time countdown**: Decrements every second and updates the UI live
+- **Visual feedback**: Orange warning at ≤5 seconds, red pulsing animation when time is up
+- **Smart cleanup**: Automatically stops when games start/stop or when timer reaches zero
+- **Non-blocking**: Uses Home Assistant's async framework for smooth performance
 
 ## 🎮 Services
 
@@ -160,7 +173,8 @@ Home Trivia exposes several services for automation:
 ### Main Sensors
 - `sensor.home_trivia_game_status` - Current game state
 - `sensor.home_trivia_current_question` - Active question details
-- `sensor.home_trivia_countdown_current` - Timer countdown
+- `sensor.home_trivia_countdown_current` - **Live countdown timer** (auto-decrements every second)
+- `sensor.home_trivia_countdown_timer` - Timer length configuration
 
 ### Team Sensors (1-5)
 - `sensor.home_trivia_team_X` - Team information and stats
