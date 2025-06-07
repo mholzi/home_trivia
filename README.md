@@ -155,7 +155,7 @@ All game setup parameters are **automatically saved** and restored across Home A
 ### ⚙️ Admin Game Settings (New!)
 The owner of **Team 1** has access to an exclusive **Game Settings** section that includes:
 - **Timer Length Control**: Adjust question timer from 15-60 seconds during gameplay
-- **Reset Game**: Convenient reset button to restart the entire game session
+- **Reset Game**: Smart reset button that clears only gameplay progress (points, answers, round progress) while preserving all user setup (team names, user assignments, difficulty level, timer length)
 - **Team 1 Owner Access**: Only visible to the user assigned to Team 1
 
 **Admin Rights**: Admin privileges are determined by Team 1 ownership. Whoever is assigned as the user for Team 1 becomes the game administrator with access to exclusive settings and controls.
@@ -184,6 +184,7 @@ The countdown timer now works **automatically** with no setup required:
 Home Trivia exposes several services for automation:
 - `home_trivia.start_game` - Start a new game
 - `home_trivia.stop_game` - Stop current game (available for automation, UI button removed for cleaner interface)
+- `home_trivia.reset_game` - Smart reset that preserves user setup (team names, user assignments, difficulty, timer) while clearing only gameplay progress (points, answers, round progress)
 - `home_trivia.next_question` - Move to next question
 - `home_trivia.update_team_answer` - Submit team answer
 - `home_trivia.update_difficulty_level` - Change difficulty
