@@ -12,7 +12,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 
 ✅ **Zero Setup Required** - Just install and play! No YAML editing, no manual configurations  
 ✅ **Lovelace Card Included** - Beautiful UI card automatically available after installation  
-✅ **Mobile Optimized** - Perfect for party gaming on phones and tablets  
+✅ **Mobile Optimized** - Perfect for party gaming on phones and tablets with QR code for easy access  
 ✅ **Multiple Difficulty Levels** - From kids to intellectuals, everyone can play  
 ✅ **Team Competition** - Support for up to 5 teams with custom names  
 ✅ **Smart Scoring** - Base points plus speed bonuses keep games exciting  
@@ -53,7 +53,7 @@ This milestone release brings you a complete, ready-to-use trivia game for your 
 
 ### 🎨 **Beautiful Interface**
 - Modern, responsive Lovelace card
-- Mobile-friendly design
+- Mobile-friendly design with QR code for easy device access
 - Intuitive splash screen for easy setup
 - Real-time game status updates
 

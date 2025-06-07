@@ -396,6 +396,19 @@ class HomeTriviaCard extends HTMLElement {
           .splash-subtitle {
             font-size: 1em;
           }
+          
+          .splash-qr-section {
+            margin: 15px 0;
+            padding: 15px;
+          }
+          
+          .qr-header h3 {
+            font-size: 1.1em;
+          }
+          
+          .qr-header p {
+            font-size: 0.8em;
+          }
         }
       </style>
 
