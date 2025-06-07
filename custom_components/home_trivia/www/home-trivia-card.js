@@ -441,12 +441,12 @@ class HomeTriviaCard extends HTMLElement {
             <p>Scan this QR code to access the game on your phone or tablet</p>
           </div>
           <div class="qr-code-container">
-            <img src="${this.generateQRCode('http://homeassistant.local:8123/')}" 
-                 alt="QR Code for http://homeassistant.local:8123/" 
+            <img src="${this.generateQRCode(this.getCurrentHomeAssistantUrl())}" 
+                 alt="QR Code for ${this.getCurrentHomeAssistantUrl()}" 
                  width="150" 
                  height="150" />
           </div>
-          <div class="qr-url">http://homeassistant.local:8123/</div>
+          <div class="qr-url">${this.getCurrentHomeAssistantUrl()}</div>
         </div>
         
         <div class="splash-start-section">
@@ -676,6 +676,13 @@ class HomeTriviaCard extends HTMLElement {
       callback();
       delete this._debounceTimers[key];
     }, delay);
+  }
+
+  // Get the current Home Assistant URL for QR code
+  getCurrentHomeAssistantUrl() {
+    // Use window.location.origin to get the current URL the browser is using
+    // This works for all access methods: local IP, domain, cloud, etc.
+    return window.location.origin;
   }
 
   // Generate a simple QR code for the given text using an offline approach
