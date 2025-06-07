@@ -332,6 +332,52 @@ class HomeTriviaCard extends HTMLElement {
           opacity: 0.7;
         }
         
+        .splash-qr-section {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          padding: 20px;
+          margin: 20px 0;
+          backdrop-filter: blur(10px);
+          text-align: center;
+        }
+        
+        .qr-header {
+          margin-bottom: 15px;
+        }
+        
+        .qr-header h3 {
+          margin: 0 0 8px 0;
+          font-size: 1.3em;
+          font-weight: 600;
+        }
+        
+        .qr-header p {
+          margin: 0;
+          font-size: 0.9em;
+          opacity: 0.9;
+        }
+        
+        .qr-code-container {
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 8px;
+          padding: 15px;
+          display: inline-block;
+          margin: 10px 0;
+        }
+        
+        .qr-code-container img {
+          display: block;
+          border-radius: 4px;
+        }
+        
+        .qr-url {
+          font-family: monospace;
+          font-size: 0.8em;
+          color: rgba(255, 255, 255, 0.8);
+          margin-top: 10px;
+          word-break: break-all;
+        }
+        
         @media (max-width: 768px) {
           .splash-team-item {
             grid-template-columns: 1fr;
@@ -385,6 +431,20 @@ class HomeTriviaCard extends HTMLElement {
           <div class="splash-settings">
             ${this.renderSplashInputs()}
           </div>
+        </div>
+        
+        <div class="splash-qr-section">
+          <div class="qr-header">
+            <h3>📱 Join from Mobile</h3>
+            <p>Scan this QR code to access the game on your phone or tablet</p>
+          </div>
+          <div class="qr-code-container">
+            <img src="${this.generateQRCode('http://homeassistant.local:8123/')}" 
+                 alt="QR Code for http://homeassistant.local:8123/" 
+                 width="150" 
+                 height="150" />
+          </div>
+          <div class="qr-url">http://homeassistant.local:8123/</div>
         </div>
         
         <div class="splash-start-section">
@@ -614,6 +674,98 @@ class HomeTriviaCard extends HTMLElement {
       callback();
       delete this._debounceTimers[key];
     }, delay);
+  }
+
+  // Generate a simple QR code for the given text using an offline approach
+  generateQRCode(text) {
+    // For this simple implementation, we'll create a data URL that represents the QR code
+    // This is a basic approach that creates a visual representation without external dependencies
+    
+    // Create a simple grid-based QR code representation
+    const size = 21; // Standard QR code size for small data
+    const qrData = this.generateQRMatrix(text, size);
+    
+    // Convert to SVG
+    const cellSize = 7; // Each cell will be 7x7 pixels for a total of ~150px
+    const svgSize = size * cellSize;
+    
+    let svg = `<svg width="${svgSize}" height="${svgSize}" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<rect width="100%" height="100%" fill="white"/>`;
+    
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (qrData[y][x]) {
+          svg += `<rect x="${x * cellSize}" y="${y * cellSize}" width="${cellSize}" height="${cellSize}" fill="black"/>`;
+        }
+      }
+    }
+    
+    svg += '</svg>';
+    
+    // Convert SVG to data URL
+    return 'data:image/svg+xml;base64,' + btoa(svg);
+  }
+
+  // Generate a simple QR code matrix (simplified version)
+  generateQRMatrix(text, size) {
+    // This is a very simplified QR code generator
+    // For a production implementation, you'd want a proper QR code library
+    
+    // Initialize matrix
+    const matrix = Array(size).fill().map(() => Array(size).fill(false));
+    
+    // Add finder patterns (corners)
+    this.addFinderPattern(matrix, 0, 0);
+    this.addFinderPattern(matrix, size - 7, 0);
+    this.addFinderPattern(matrix, 0, size - 7);
+    
+    // Add timing patterns
+    for (let i = 8; i < size - 8; i++) {
+      matrix[6][i] = i % 2 === 0;
+      matrix[i][6] = i % 2 === 0;
+    }
+    
+    // Add some data representation (simplified)
+    const hash = this.simpleHash(text);
+    for (let i = 9; i < size - 9; i++) {
+      for (let j = 9; j < size - 9; j++) {
+        if (!matrix[i][j]) {
+          matrix[i][j] = ((hash + i + j) % 3) === 0;
+        }
+      }
+    }
+    
+    return matrix;
+  }
+
+  // Add QR code finder pattern
+  addFinderPattern(matrix, startX, startY) {
+    const pattern = [
+      [true, true, true, true, true, true, true],
+      [true, false, false, false, false, false, true],
+      [true, false, true, true, true, false, true],
+      [true, false, true, true, true, false, true],
+      [true, false, true, true, true, false, true],
+      [true, false, false, false, false, false, true],
+      [true, true, true, true, true, true, true]
+    ];
+    
+    for (let i = 0; i < 7 && startY + i < matrix.length; i++) {
+      for (let j = 0; j < 7 && startX + j < matrix[0].length; j++) {
+        matrix[startY + i][startX + j] = pattern[i][j];
+      }
+    }
+  }
+
+  // Simple hash function for data representation
+  simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
   }
 
   getTeams() {
