@@ -186,6 +186,12 @@ async def _register_services(hass: HomeAssistant) -> None:
     async def stop_game(call):
         _LOGGER.info("Stopping Home Trivia game")
         entities = _get_entities()
+        
+        # Stop any countdown timer
+        countdown_current_sensor = entities.get("countdown_current_sensor")
+        if countdown_current_sensor and hasattr(countdown_current_sensor, 'stop_countdown'):
+            countdown_current_sensor.stop_countdown()
+        
         main_sensor = entities.get("main_sensor")
         if main_sensor and hasattr(main_sensor, 'set_state'):
             main_sensor.set_state("stopped")
@@ -195,6 +201,11 @@ async def _register_services(hass: HomeAssistant) -> None:
     async def reset_game(call):
         _LOGGER.info("Resetting Home Trivia game")
         entities = _get_entities()
+        
+        # Stop any countdown timer
+        countdown_current_sensor = entities.get("countdown_current_sensor")
+        if countdown_current_sensor and hasattr(countdown_current_sensor, 'stop_countdown'):
+            countdown_current_sensor.stop_countdown()
         
         # Reset game status
         main_sensor = entities.get("main_sensor")

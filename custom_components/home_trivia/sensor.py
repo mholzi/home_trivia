@@ -1,6 +1,7 @@
 """Home Trivia sensor platform."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -314,6 +315,7 @@ class HomeTriviaCountdownCurrentSensor(SensorEntity):
         self._attr_icon = "mdi:timer-sand"
         self._current_time = 0
         self._is_running = False
+        self._countdown_task = None
 
     @property
     def state(self) -> int:
@@ -329,24 +331,64 @@ class HomeTriviaCountdownCurrentSensor(SensorEntity):
             "is_running": self._is_running,
         }
 
+    async def _countdown_worker(self) -> None:
+        """Worker coroutine that decrements the timer every second."""
+        try:
+            while self._is_running and self._current_time > 0:
+                await asyncio.sleep(1)
+                if self._is_running and self._current_time > 0:
+                    self._current_time -= 1
+                    self.async_write_ha_state()
+                    _LOGGER.debug("Countdown timer: %d seconds remaining", self._current_time)
+            
+            # Timer reached zero
+            if self._is_running and self._current_time <= 0:
+                self._is_running = False
+                self.async_write_ha_state()
+                _LOGGER.info("Countdown timer reached zero")
+        except asyncio.CancelledError:
+            _LOGGER.debug("Countdown timer task was cancelled")
+        except Exception as e:
+            _LOGGER.error("Error in countdown timer: %s", e)
+            self._is_running = False
+            self.async_write_ha_state()
+
     def start_countdown(self, initial_time: int) -> None:
         """Start the countdown timer."""
+        # Stop any existing countdown
+        self.stop_countdown()
+        
         self._current_time = initial_time
         self._is_running = True
         self.async_write_ha_state()
-        # Note: Actual countdown logic would need to be implemented
-        # with async timers in a real implementation
+        
+        # Start the countdown task using Home Assistant's async framework
+        if self.hass:
+            self._countdown_task = self.hass.async_create_task(self._countdown_worker())
+            _LOGGER.info("Started countdown timer for %d seconds", initial_time)
 
     def stop_countdown(self) -> None:
         """Stop the countdown timer."""
         self._is_running = False
+        
+        # Cancel the countdown task if it's running
+        if self._countdown_task and not self._countdown_task.done():
+            self._countdown_task.cancel()
+            self._countdown_task = None
+        
         self._current_time = 0
         self.async_write_ha_state()
+        _LOGGER.debug("Countdown timer stopped")
 
     def update_current_time(self, time: int) -> None:
         """Update the current countdown time."""
         self._current_time = time
         self.async_write_ha_state()
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Called when entity will be removed from hass."""
+        # Ensure we clean up the countdown task when the entity is removed
+        self.stop_countdown()
 
 
 class HomeTriviaCurrentQuestionSensor(SensorEntity):

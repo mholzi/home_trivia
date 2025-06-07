@@ -1132,6 +1132,23 @@ class HomeTriviaCard extends HTMLElement {
           font-weight: bold;
           color: var(--primary-color);
           margin-bottom: 20px;
+          padding: 10px;
+          border-radius: 8px;
+          transition: all 0.3s ease;
+        }
+        .countdown-timer.time-up {
+          color: var(--error-color, #ff3333);
+          background-color: var(--error-background, rgba(255, 51, 51, 0.1));
+          animation: pulse-red 1s infinite;
+        }
+        .countdown-timer.warning {
+          color: var(--warning-color, #ff9800);
+          background-color: var(--warning-background, rgba(255, 152, 0, 0.1));
+        }
+        @keyframes pulse-red {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+          100% { transform: scale(1); opacity: 1; }
         }
         .teams-grid {
           display: grid;
@@ -1359,11 +1376,23 @@ class HomeTriviaCard extends HTMLElement {
     }
 
     const timeLeft = countdown ? countdown.state : 0;
+    const isRunning = countdown ? countdown.attributes.is_running : false;
     const isTimeUp = timeLeft <= 0;
+    
+    // Determine timer CSS classes based on time remaining
+    let timerClasses = 'countdown-timer';
+    let timerText = `${timeLeft}s`;
+    
+    if (isTimeUp) {
+      timerClasses += ' time-up';
+      timerText = 'TIME UP!';
+    } else if (timeLeft <= 5 && isRunning) {
+      timerClasses += ' warning';
+    }
 
     let html = `
       <div class="question-section">
-        <div class="countdown-timer">${timeLeft}s</div>
+        <div class="${timerClasses}">${timerText}</div>
         <div class="question-title">${currentQuestion.attributes.category}</div>
         <div class="question-text">${currentQuestion.attributes.question}</div>
     `;
