@@ -1500,6 +1500,10 @@ class HomeTriviaCard extends HTMLElement {
   renderTeamsSection() {
     let html = '<div class="teams-grid">';
     
+    // Check if timer is currently running to hide answer details
+    const countdown = this._hass.states['sensor.home_trivia_countdown_current'];
+    const isTimerRunning = countdown && countdown.attributes && countdown.attributes.is_running;
+    
     for (let i = 1; i <= 5; i++) {
       const team = this._hass.states[`sensor.home_trivia_team_${i}`];
       if (!team || !team.attributes.participating) continue;
@@ -1518,7 +1522,7 @@ class HomeTriviaCard extends HTMLElement {
           <div class="team-name">${team.state}</div>
           <div class="team-points">${points} points</div>
           <div class="team-answer ${answered ? 'team-answered' : 'team-not-answered'}">
-            ${answered ? `Answer: ${answer}` : 'Not answered'}
+            ${answered ? (isTimerRunning ? 'Answered' : `Answer: ${answer}`) : 'Not answered'}
           </div>`;
       
       // Show last round results if available
