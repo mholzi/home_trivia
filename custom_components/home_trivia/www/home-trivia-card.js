@@ -59,8 +59,14 @@ class HomeTriviaCard extends HTMLElement {
         this.requestUpdate();
       }
     } else {
-      // Always update main game screen
-      this.requestUpdate();
+      // For main game screen, check if there are meaningful changes before updating
+      // This prevents dropdown refreshing from frequent state updates
+      if (this.hasSignificantStateChanges(previousHass, hass)) {
+        // Only update if forms aren't actively being edited to prevent dropdown issues
+        if (!this.isFormActivelyBeingEdited()) {
+          this.requestUpdate();
+        }
+      }
     }
   }
 
@@ -110,6 +116,40 @@ class HomeTriviaCard extends HTMLElement {
     }
     
     return team1State.attributes.user_id === this._hass.user.id;
+  }
+
+  // Check if there are significant state changes that require a re-render
+  hasSignificantStateChanges(previousHass, currentHass) {
+    if (!previousHass || !currentHass) {
+      return true;
+    }
+
+    // Check important entities that affect the UI
+    const importantEntities = [
+      'sensor.home_trivia_game_status',
+      'sensor.home_trivia_current_question', 
+      'sensor.home_trivia_countdown',
+      'sensor.home_trivia_team_1',
+      'sensor.home_trivia_team_2', 
+      'sensor.home_trivia_team_3',
+      'sensor.home_trivia_team_4',
+      'sensor.home_trivia_team_5'
+    ];
+
+    for (const entityId of importantEntities) {
+      const prevEntity = previousHass.states[entityId];
+      const currEntity = currentHass.states[entityId];
+      
+      // If entity state changed or attributes changed significantly
+      if (!prevEntity !== !currEntity || 
+          (prevEntity && currEntity && 
+           (prevEntity.state !== currEntity.state ||
+            JSON.stringify(prevEntity.attributes) !== JSON.stringify(currEntity.attributes)))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   // Clear a specific pending form value when backend confirms the change
@@ -1349,8 +1389,8 @@ class HomeTriviaCard extends HTMLElement {
         <div class="game-content">
           ${this.renderQuestionSection(currentQuestion, countdown)}
           ${this.renderTeamsSection()}
-          ${this.renderTeamManagement()}
           ${this.renderGameSettings()}
+          ${this.renderTeamManagement()}
           ${this.renderGameControls(gameStatus)}
         </div>
       </div>
