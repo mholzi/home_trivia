@@ -16,6 +16,15 @@ class HomeTriviaCard extends HTMLElement {
     this.homeAssistantUsers = [];
     this.usersLoaded = false;
     this._isLoadingUsers = false;
+    
+    // Initialize optimistic local state for form values
+    this._pendingFormValues = {
+      difficulty: null,
+      timerLength: null,
+      teamCount: null,
+      teamNames: {},
+      teamUserIds: {}
+    };
   }
 
   // HTML escape utility for security
@@ -45,7 +54,8 @@ class HomeTriviaCard extends HTMLElement {
       this.requestUpdate();
     } else if (this.shouldShowSplashScreen()) {
       // If we're on splash screen, only update if forms aren't actively being edited
-      if (!this.isFormActivelyBeingEdited()) {
+      // and there are no pending form changes
+      if (!this.isFormActivelyBeingEdited() && !this.hasPendingFormChanges()) {
         this.requestUpdate();
       }
     } else {
@@ -84,6 +94,38 @@ class HomeTriviaCard extends HTMLElement {
       activeElement.tagName === 'SELECT' || 
       activeElement.tagName === 'TEXTAREA'
     );
+  }
+
+  // Check if there are any pending form changes that haven't been sent to backend yet
+  hasPendingFormChanges() {
+    return this._pendingFormValues.difficulty !== null ||
+           this._pendingFormValues.timerLength !== null ||
+           this._pendingFormValues.teamCount !== null ||
+           Object.keys(this._pendingFormValues.teamNames).length > 0 ||
+           Object.keys(this._pendingFormValues.teamUserIds).length > 0;
+  }
+
+  // Clear a specific pending form value when backend confirms the change
+  clearPendingFormValue(key, subKey = null) {
+    if (subKey) {
+      delete this._pendingFormValues[key][subKey];
+    } else {
+      this._pendingFormValues[key] = null;
+    }
+  }
+
+  // Get the effective value for a form field (pending value or HA entity value)
+  getEffectiveFormValue(key, subKey = null, fallbackValue = null) {
+    if (subKey) {
+      if (this._pendingFormValues[key] && this._pendingFormValues[key][subKey] !== undefined) {
+        return this._pendingFormValues[key][subKey];
+      }
+    } else {
+      if (this._pendingFormValues[key] !== null) {
+        return this._pendingFormValues[key];
+      }
+    }
+    return fallbackValue;
   }
 
   requestUpdate() {
@@ -459,20 +501,36 @@ class HomeTriviaCard extends HTMLElement {
 
     // Add event listeners
     this.shadowRoot.getElementById('difficulty-select')?.addEventListener('change', (e) => {
+      // Store pending value optimistically
+      this._pendingFormValues.difficulty = e.target.value;
       this.updateDifficultyDescription(e.target.value);
+      
       // Persist difficulty level immediately
       this.debouncedServiceCall('difficulty_level', () => {
         this._hass.callService('home_trivia', 'update_difficulty_level', {
           difficulty_level: e.target.value
+        }).then(() => {
+          // Clear pending value when backend confirms
+          this.clearPendingFormValue('difficulty');
+        }).catch(() => {
+          // Keep pending value on error - user can retry
         });
       }, 500); // Increased delay to prevent resets
     });
 
     this.shadowRoot.getElementById('timer-select')?.addEventListener('change', (e) => {
+      // Store pending value optimistically
+      this._pendingFormValues.timerLength = e.target.value;
+      
       // Persist timer length immediately
       this.debouncedServiceCall('timer_length', () => {
         this._hass.callService('home_trivia', 'update_countdown_timer_length', {
           timer_length: parseInt(e.target.value)
+        }).then(() => {
+          // Clear pending value when backend confirms
+          this.clearPendingFormValue('timerLength');
+        }).catch(() => {
+          // Keep pending value on error - user can retry
         });
       }, 500); // Increased delay to prevent resets
     });
@@ -480,10 +538,18 @@ class HomeTriviaCard extends HTMLElement {
     this.shadowRoot.getElementById('team-count-select')?.addEventListener('change', (e) => {
       const teamCount = parseInt(e.target.value);
       
+      // Store pending value optimistically
+      this._pendingFormValues.teamCount = teamCount;
+      
       // Persist team count immediately
       this.debouncedServiceCall('team_count', () => {
         this._hass.callService('home_trivia', 'update_team_count', {
           team_count: teamCount
+        }).then(() => {
+          // Clear pending value when backend confirms
+          this.clearPendingFormValue('teamCount');
+        }).catch(() => {
+          // Keep pending value on error - user can retry
         });
       }, 500); // Increased delay to prevent resets
       
@@ -499,9 +565,14 @@ class HomeTriviaCard extends HTMLElement {
     const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
     const timerSensor = this._hass?.states['sensor.home_trivia_countdown_timer'];
     
-    const currentDifficulty = gameStatus?.attributes?.difficulty_level || 'Easy';
-    const currentTimerLength = timerSensor?.state || '30';
-    const currentTeamCount = gameStatus?.attributes?.team_count || 2;
+    // Use effective values (pending local changes take precedence over HA entity values)
+    const baseDifficulty = gameStatus?.attributes?.difficulty_level || 'Easy';
+    const baseTimerLength = timerSensor?.state || '30';
+    const baseTeamCount = gameStatus?.attributes?.team_count || 2;
+    
+    const currentDifficulty = this.getEffectiveFormValue('difficulty', null, baseDifficulty);
+    const currentTimerLength = this.getEffectiveFormValue('timerLength', null, baseTimerLength);
+    const currentTeamCount = this.getEffectiveFormValue('teamCount', null, baseTeamCount);
 
     // Difficulty Level Input
     inputsHtml += `
@@ -575,24 +646,30 @@ class HomeTriviaCard extends HTMLElement {
         </div>
         <p class="input-description">Assign names and users to your teams</p>
         <div class="splash-teams-container">
-          ${Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => `
+          ${Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => {
+            // Use effective values for team name and user ID
+            const effectiveTeamName = this.getEffectiveFormValue('teamNames', teamId, team.name);
+            const effectiveUserId = this.getEffectiveFormValue('teamUserIds', teamId, team.user_id);
+            
+            return `
             <div class="splash-team-item">
               <label class="team-label">Team ${teamId.split('_')[1]}:</label>
               <input type="text" class="splash-team-input" id="team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
-                     value="${this.escapeHtml(team.name)}" 
+                     value="${this.escapeHtml(effectiveTeamName)}" 
                      oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
               <select class="splash-team-select" 
                       onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
                       ${isLoadingUsers ? 'disabled' : ''}>
                 <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
                 ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
-                  `<option value="${this.escapeHtml(user.id)}" ${team.user_id === user.id ? 'selected' : ''}>
+                  `<option value="${this.escapeHtml(user.id)}" ${effectiveUserId === user.id ? 'selected' : ''}>
                     ${this.escapeHtml(user.name)}
                   </option>`
                 ).join('')}
               </select>
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
       </div>
     `;
@@ -797,24 +874,40 @@ class HomeTriviaCard extends HTMLElement {
   }
 
   updateTeamName(teamId, name) {
+    // Store pending value optimistically
+    this._pendingFormValues.teamNames[teamId] = name;
+    
     // Debounce team name updates
     this.debouncedServiceCall(`teamName_${teamId}`, () => {
       if (this._hass && name.trim()) {
         this._hass.callService('home_trivia', 'update_team_name', {
           team_id: teamId,
           name: name.trim()
+        }).then(() => {
+          // Clear pending value when backend confirms
+          this.clearPendingFormValue('teamNames', teamId);
+        }).catch(() => {
+          // Keep pending value on error - user can retry
         });
       }
     }, 1000); // Increased delay to prevent frequent resets
   }
 
   updateTeamUserId(teamId, userId) {
+    // Store pending value optimistically
+    this._pendingFormValues.teamUserIds[teamId] = userId;
+    
     // Debounce team user ID updates
     this.debouncedServiceCall(`teamUserId_${teamId}`, () => {
       if (this._hass) {
         this._hass.callService('home_trivia', 'update_team_user_id', {
           team_id: teamId,
           user_id: userId || null
+        }).then(() => {
+          // Clear pending value when backend confirms
+          this.clearPendingFormValue('teamUserIds', teamId);
+        }).catch(() => {
+          // Keep pending value on error - user can retry
         });
       }
       
@@ -848,24 +941,30 @@ class HomeTriviaCard extends HTMLElement {
       const users = this.homeAssistantUsers || [];
       const isLoadingUsers = this._isLoadingUsers || (!this.usersLoaded && users.length === 0);
       
-      splashTeamsContainer.innerHTML = Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => `
+      splashTeamsContainer.innerHTML = Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => {
+        // Use effective values for team name and user ID
+        const effectiveTeamName = this.getEffectiveFormValue('teamNames', teamId, team.name);
+        const effectiveUserId = this.getEffectiveFormValue('teamUserIds', teamId, team.user_id);
+        
+        return `
         <div class="splash-team-item">
           <label class="team-label">Team ${teamId.split('_')[1]}:</label>
           <input type="text" class="splash-team-input" id="team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
-                 value="${this.escapeHtml(team.name)}" 
+                 value="${this.escapeHtml(effectiveTeamName)}" 
                  oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
           <select class="splash-team-select" 
                   onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
                   ${isLoadingUsers ? 'disabled' : ''}>
             <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
             ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
-              `<option value="${this.escapeHtml(user.id)}" ${team.user_id === user.id ? 'selected' : ''}>
+              `<option value="${this.escapeHtml(user.id)}" ${effectiveUserId === user.id ? 'selected' : ''}>
                 ${this.escapeHtml(user.name)}
               </option>`
             ).join('')}
           </select>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
     
     // Update team participation status for all teams
