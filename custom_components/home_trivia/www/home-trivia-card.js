@@ -25,6 +25,11 @@ class HomeTriviaCard extends HTMLElement {
       teamNames: {},
       teamUserIds: {}
     };
+    
+    // Initialize translation system
+    this.translations = {};
+    this.currentLanguage = localStorage.getItem('home-trivia-language') || 'en';
+    this._loadTranslations();
   }
 
   // HTML escape utility for security
@@ -32,6 +37,76 @@ class HomeTriviaCard extends HTMLElement {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // Load translations from the translations.json file
+  async _loadTranslations() {
+    try {
+      const response = await fetch('/home_trivia_frontend_assets/translations.json');
+      if (response.ok) {
+        this.translations = await response.json();
+      } else {
+        console.warn('Failed to load translations, using fallback');
+        this._initializeFallbackTranslations();
+      }
+    } catch (error) {
+      console.warn('Error loading translations:', error);
+      this._initializeFallbackTranslations();
+    }
+  }
+
+  // Fallback translations in case file loading fails
+  _initializeFallbackTranslations() {
+    this.translations = {
+      en: {
+        loading: "Loading Home Trivia...",
+        welcome: "🎯 Welcome to Home Trivia!",
+        gameTitle: "🎯 Home Trivia",
+        gameSettings: "⚙️ Game Settings",
+        teamManagement: "🛠️ Team Management",
+        language: "🌐 Language"
+      },
+      de: {
+        loading: "Lade Home Trivia...",
+        welcome: "🎯 Willkommen bei Home Trivia!",
+        gameTitle: "🎯 Home Trivia", 
+        gameSettings: "⚙️ Spiel-Einstellungen",
+        teamManagement: "🛠️ Team-Verwaltung",
+        language: "🌐 Sprache"
+      }
+    };
+  }
+
+  // Get translated text
+  t(key, fallback = null) {
+    const keys = key.split('.');
+    let value = this.translations[this.currentLanguage];
+    
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        // Fallback to English if key not found in current language
+        value = this.translations['en'];
+        for (const k2 of keys) {
+          if (value && typeof value === 'object' && k2 in value) {
+            value = value[k2];
+          } else {
+            return fallback || key;
+          }
+        }
+        break;
+      }
+    }
+    
+    return value || fallback || key;
+  }
+
+  // Switch language and save preference
+  switchLanguage(lang) {
+    this.currentLanguage = lang;
+    localStorage.setItem('home-trivia-language', lang);
+    this.requestUpdate();
   }
 
   setConfig(config) {
@@ -147,7 +222,7 @@ class HomeTriviaCard extends HTMLElement {
 
   render() {
     if (!this._hass) {
-      this.shadowRoot.innerHTML = '<div style="padding: 20px;">Loading Home Trivia...</div>';
+      this.shadowRoot.innerHTML = `<div style="padding: 20px;">${this.t('loading')}</div>`;
       return;
     }
 
@@ -168,13 +243,14 @@ class HomeTriviaCard extends HTMLElement {
       <style>
         .splash-screen {
           text-align: center;
-          padding: 24px;
-          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #764ba2 75%, #667eea 100%);
-          border-radius: var(--ha-card-border-radius, 4px);
+          padding: 32px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 75%, #f5576c 100%);
+          border-radius: var(--ha-card-border-radius, 12px);
           color: white;
           position: relative;
           overflow: hidden;
-          min-height: 400px;
+          min-height: 500px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
         
         .splash-header {
@@ -186,11 +262,15 @@ class HomeTriviaCard extends HTMLElement {
 
         
         .splash-title {
-          font-size: 2.5em;
-          font-weight: bold;
+          font-size: 3em;
+          font-weight: 800;
           margin-bottom: 16px;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-          letter-spacing: 1px;
+          text-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+          letter-spacing: 1.2px;
+          background: linear-gradient(45deg, #ffffff, #f0f0f0);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
         
         .splash-subtitle {
@@ -248,18 +328,22 @@ class HomeTriviaCard extends HTMLElement {
         }
         
         .splash-input-section {
-          background: rgba(255, 255, 255, 0.15);
-          border-radius: 8px;
-          padding: 20px;
-          margin-bottom: 16px;
+          background: rgba(255, 255, 255, 0.12);
+          border-radius: 16px;
+          padding: 24px;
+          margin-bottom: 20px;
           text-align: left;
-          transition: all 0.3s ease;
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(20px);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
         .splash-input-section:hover {
-          background: rgba(255, 255, 255, 0.2);
-          border-color: rgba(255, 255, 255, 0.4);
+          background: rgba(255, 255, 255, 0.18);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-2px);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
         
         .splash-input-section.error {
@@ -274,39 +358,44 @@ class HomeTriviaCard extends HTMLElement {
         }
         
         .splash-input-header h3 {
-          margin: 0 0 0 8px;
-          font-size: 1.1em;
-          font-weight: 600;
+          margin: 0 0 0 12px;
+          font-size: 1.3em;
+          font-weight: 700;
+          color: white;
         }
         
         .input-icon {
-          --mdc-icon-size: 20px;
-          color: rgba(255, 255, 255, 0.8);
+          --mdc-icon-size: 24px;
+          color: rgba(255, 255, 255, 0.9);
         }
         
         .input-description {
-          margin: 0 0 12px 0;
-          opacity: 0.8;
-          font-size: 0.9em;
+          margin: 0 0 16px 0;
+          opacity: 0.85;
+          font-size: 0.95em;
+          line-height: 1.4;
         }
         
         .form-select, .splash-team-input, .splash-team-select {
           width: 100%;
-          padding: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          border-radius: 6px;
+          padding: 16px 20px;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
           background: rgba(255, 255, 255, 0.95);
-          color: #333333;
+          color: #2d3748;
           font-size: 16px;
+          font-weight: 500;
           box-sizing: border-box;
-          transition: all 0.2s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
         
         .form-select:focus, .splash-team-input:focus, .splash-team-select:focus {
           outline: none;
-          border-color: rgba(255, 255, 255, 0.8);
-          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.6);
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1);
           background: rgba(255, 255, 255, 1.0);
+          transform: translateY(-1px);
         }
         
         .splash-teams-container {
@@ -461,7 +550,7 @@ class HomeTriviaCard extends HTMLElement {
         
         <div class="splash-header">
           <h1 class="splash-title">
-            🎯 Welcome to Home Trivia!
+            ${this.t('welcome')}
           </h1>
           <p class="splash-subtitle">🧠 The ultimate Home Assistant trivia game experience! 🏆</p>
           <div class="splash-sound-waves">
@@ -566,14 +655,14 @@ class HomeTriviaCard extends HTMLElement {
       <div class="splash-input-section">
         <div class="splash-input-header">
           <ha-icon icon="mdi:school" class="input-icon"></ha-icon>
-          <h3>Difficulty Level</h3>
+          <h3>${this.t('difficultyLevel')}</h3>
         </div>
-        <p class="input-description">Choose the difficulty level for your trivia questions</p>
+        <p class="input-description">${this.t('difficultySelectionHint')}</p>
         <select class="form-select" id="difficulty-select">
-          <option value="Kids" ${currentDifficulty === 'Kids' ? 'selected' : ''}>🧒 Kids Level</option>
-          <option value="Easy" ${currentDifficulty === 'Easy' ? 'selected' : ''}>🎓 Easy Level</option>
-          <option value="Medium" ${currentDifficulty === 'Medium' ? 'selected' : ''}>🏛️ Medium Level</option>
-          <option value="Hard" ${currentDifficulty === 'Hard' ? 'selected' : ''}>🧠 Hard Level</option>
+          <option value="Kids" ${currentDifficulty === 'Kids' ? 'selected' : ''}>${this.t('difficultyKids')}</option>
+          <option value="Easy" ${currentDifficulty === 'Easy' ? 'selected' : ''}>${this.t('difficultyEasy')}</option>
+          <option value="Medium" ${currentDifficulty === 'Medium' ? 'selected' : ''}>${this.t('difficultyMedium')}</option>
+          <option value="Hard" ${currentDifficulty === 'Hard' ? 'selected' : ''}>${this.t('difficultyHard')}</option>
         </select>
         <div class="difficulty-description" id="difficulty-description" style="margin-top: 8px; opacity: 0.8; font-style: italic;">
           ${this.getDifficultyDescription(currentDifficulty)}
@@ -586,15 +675,15 @@ class HomeTriviaCard extends HTMLElement {
       <div class="splash-input-section">
         <div class="splash-input-header">
           <ha-icon icon="mdi:account-group" class="input-icon"></ha-icon>
-          <h3>Number of Teams</h3>
+          <h3>${this.t('numberOfTeams')}</h3>
         </div>
-        <p class="input-description">How many teams will participate in the game?</p>
+        <p class="input-description">${this.t('teamCountHint')}</p>
         <select class="form-select" id="team-count-select">
-          <option value="1" ${currentTeamCount === 1 ? 'selected' : ''}>1 Team</option>
-          <option value="2" ${currentTeamCount === 2 ? 'selected' : ''}>2 Teams</option>
-          <option value="3" ${currentTeamCount === 3 ? 'selected' : ''}>3 Teams</option>
-          <option value="4" ${currentTeamCount === 4 ? 'selected' : ''}>4 Teams</option>
-          <option value="5" ${currentTeamCount === 5 ? 'selected' : ''}>5 Teams</option>
+          <option value="1" ${currentTeamCount === 1 ? 'selected' : ''}>1 ${this.t('team')}</option>
+          <option value="2" ${currentTeamCount === 2 ? 'selected' : ''}>2 ${this.t('team')}s</option>
+          <option value="3" ${currentTeamCount === 3 ? 'selected' : ''}>3 ${this.t('team')}s</option>
+          <option value="4" ${currentTeamCount === 4 ? 'selected' : ''}>4 ${this.t('team')}s</option>
+          <option value="5" ${currentTeamCount === 5 ? 'selected' : ''}>5 ${this.t('team')}s</option>
         </select>
       </div>
     `;
@@ -611,9 +700,9 @@ class HomeTriviaCard extends HTMLElement {
       <div class="splash-input-section">
         <div class="splash-input-header">
           <ha-icon icon="mdi:account-group-outline" class="input-icon"></ha-icon>
-          <h3>Team Setup</h3>
+          <h3>${this.t('teamSetup')}</h3>
         </div>
-        <p class="input-description">Assign names and users to your teams</p>
+        <p class="input-description">${this.t('teamSetupHint')}</p>
         <div class="splash-teams-container">
           ${Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => {
             // Use effective values for team name and user ID
@@ -622,14 +711,14 @@ class HomeTriviaCard extends HTMLElement {
             
             return `
             <div class="splash-team-item">
-              <label class="team-label">Team ${teamId.split('_')[1]}:</label>
-              <input type="text" class="splash-team-input" id="team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
+              <label class="team-label">${this.t('team')} ${teamId.split('_')[1]}:</label>
+              <input type="text" class="splash-team-input" id="team-${teamId.split('_')[1]}-name" placeholder="${this.t('teamName')}" 
                      value="${this.escapeHtml(effectiveTeamName)}" 
                      oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
               <select class="splash-team-select" 
                       onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
                       ${isLoadingUsers ? 'disabled' : ''}>
-                <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
+                <option value="">${isLoadingUsers ? this.t('loadingUsers') : this.t('selectUser')}</option>
                 ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
                   `<option value="${this.escapeHtml(user.id)}" ${effectiveUserId === user.id ? 'selected' : ''}>
                     ${this.escapeHtml(user.name)}
@@ -886,13 +975,7 @@ class HomeTriviaCard extends HTMLElement {
   }
 
   getDifficultyDescription(difficulty) {
-    const descriptions = {
-      'Kids': 'Perfect for curious minds around 10 years old! Fun questions about animals, colors, and basic facts.',
-      'Easy': 'Great for testing what you learned in school with questions about geography, basic science, and history.',
-      'Medium': 'University-level challenges! Dive deeper into literature, advanced science, and complex historical facts.',
-      'Hard': 'University-level knowledge! Mind-bending questions about advanced topics, philosophy, and specialized knowledge.'
-    };
-    return descriptions[difficulty] || descriptions['Easy'];
+    return this.t(`difficultyDescriptions.${difficulty}`, `Choose your challenge level!`);
   }
 
   updateDifficultyDescription(difficulty) {
@@ -1045,66 +1128,95 @@ class HomeTriviaCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         .game-container {
-          font-family: var(--ha-card-header-font-family, inherit);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Open Sans', 'Helvetica Neue', sans-serif;
           background: var(--ha-card-background, var(--card-background-color, white));
-          border-radius: var(--ha-card-border-radius, 12px);
-          border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color, #e0e0e0));
-          box-shadow: var(--ha-card-box-shadow, var(--paper-material-elevation-1_-_box-shadow));
+          border-radius: var(--ha-card-border-radius, 16px);
+          border: none;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04);
           overflow: hidden;
         }
         .game-header {
-          background: var(--primary-color);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
-          padding: 20px;
+          padding: 32px 24px;
           text-align: center;
+          position: relative;
+        }
+        .game-header::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%), 
+                      linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%);
+          background-size: 20px 20px;
+          background-position: 0 0, 10px 10px;
+          opacity: 0.3;
         }
         .game-title {
-          font-size: 1.8em;
-          font-weight: bold;
-          margin-bottom: 10px;
+          font-size: 2.2em;
+          font-weight: 800;
+          margin-bottom: 12px;
+          position: relative;
+          z-index: 1;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .game-status {
-          font-size: 1.2em;
-          opacity: 0.9;
+          font-size: 1.3em;
+          opacity: 0.95;
+          position: relative;
+          z-index: 1;
+          font-weight: 500;
         }
         .game-content {
-          padding: 20px;
+          padding: 32px 24px;
         }
         .question-section {
-          margin-bottom: 30px;
+          margin-bottom: 40px;
           text-align: center;
         }
         .question-title {
-          font-size: 1.4em;
-          font-weight: bold;
-          margin-bottom: 15px;
-          color: var(--primary-text-color);
-        }
-        .question-text {
-          font-size: 1.1em;
+          font-size: 1.6em;
+          font-weight: 700;
           margin-bottom: 20px;
           color: var(--primary-text-color);
-          line-height: 1.5;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .question-text {
+          font-size: 1.2em;
+          margin-bottom: 24px;
+          color: var(--primary-text-color);
+          line-height: 1.6;
+          font-weight: 500;
         }
         .answers-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 10px;
-          margin-bottom: 20px;
+          gap: 16px;
+          margin-bottom: 24px;
         }
         .answer-button {
-          padding: 15px;
-          border: 2px solid var(--divider-color);
-          border-radius: 8px;
-          background: var(--card-background-color, white);
+          padding: 20px 24px;
+          border: 2px solid rgba(102, 126, 234, 0.2);
+          border-radius: 16px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.95) 100%);
           cursor: pointer;
-          font-size: 1em;
-          transition: all 0.2s;
+          font-size: 1.1em;
+          font-weight: 600;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          text-align: left;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
         }
         .answer-button:hover {
-          background: var(--primary-color);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
-          border-color: var(--primary-color);
+          border-color: #667eea;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
         }
         .countdown-timer {
           text-align: center;
@@ -1163,38 +1275,60 @@ class HomeTriviaCard extends HTMLElement {
         }
         .teams-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 15px;
-          margin-bottom: 20px;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 20px;
+          margin-bottom: 32px;
         }
         .team-card {
-          border: 1px solid var(--divider-color);
-          border-radius: 8px;
-          padding: 15px;
+          border: none;
+          border-radius: 16px;
+          padding: 24px 20px;
           text-align: center;
+          background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.95) 100%);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04);
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        .team-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        .team-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12), 0 4px 24px rgba(0, 0, 0, 0.08);
         }
         .team-name {
-          font-weight: bold;
-          margin-bottom: 10px;
+          font-weight: 700;
+          margin-bottom: 12px;
           color: var(--primary-text-color);
+          font-size: 1.1em;
         }
         .team-points {
-          font-size: 1.2em;
-          color: var(--primary-color);
-          margin-bottom: 10px;
+          font-size: 1.4em;
+          color: #667eea;
+          margin-bottom: 16px;
+          font-weight: 800;
         }
         .team-answer {
-          padding: 5px 10px;
-          border-radius: 15px;
+          padding: 8px 16px;
+          border-radius: 20px;
           font-size: 0.9em;
-          font-weight: bold;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
         .team-answered {
-          background: var(--success-color, green);
+          background: linear-gradient(135deg, #10b981, #059669);
           color: white;
         }
         .team-not-answered {
-          background: var(--warning-color, orange);
+          background: linear-gradient(135deg, #f59e0b, #d97706);
           color: white;
         }
         .team-last-round {
@@ -1357,8 +1491,8 @@ class HomeTriviaCard extends HTMLElement {
       
       <div class="game-container">
         <div class="game-header">
-          <div class="game-title">🎯 Home Trivia</div>
-          <div class="game-status">${gameStatus ? gameStatus.state : 'Loading...'}</div>
+          <div class="game-title">${this.t('gameTitle')}</div>
+          <div class="game-status">${gameStatus ? gameStatus.state : this.t('loading_')}</div>
         </div>
         
         <div class="game-content">
@@ -1418,7 +1552,7 @@ class HomeTriviaCard extends HTMLElement {
       return `
         <div class="question-section">
           <div class="question-title">Ready for the next question?</div>
-          <div class="question-text">Click "Next Question" to start!</div>
+          <div class="question-text">${this.t('clickNextQuestion')}</div>
         </div>
       `;
     }
@@ -1444,7 +1578,7 @@ class HomeTriviaCard extends HTMLElement {
     
     if (isTimeUp) {
       timerClasses += ' time-up';
-      timerText = 'TIME UP!';
+      timerText = this.t('timeUp');
     } else if (timeLeft <= 5 && isRunning) {
       timerClasses += ' warning';
     }
@@ -1482,11 +1616,11 @@ class HomeTriviaCard extends HTMLElement {
       
       html += `
         <div class="question-text" style="color: var(--success-color, green); font-weight: bold;">
-          Correct Answer: ${correctAnswer}) ${answerText}
+          ${this.t('correctAnswer')}: ${correctAnswer}) ${answerText}
         </div>
         ${currentQuestion.attributes.fun_fact ? `
           <div class="fun-fact">
-            <div class="fun-fact-title">🎓 Fun Fact</div>
+            <div class="fun-fact-title">🎓 ${this.t('funFact')}</div>
             <div>${currentQuestion.attributes.fun_fact}</div>
           </div>
         ` : ''}
@@ -1522,14 +1656,14 @@ class HomeTriviaCard extends HTMLElement {
           <div class="team-name">${team.state}</div>
           <div class="team-points">${points} points</div>
           <div class="team-answer ${answered ? 'team-answered' : 'team-not-answered'}">
-            ${answered ? (isTimerRunning ? 'Answered' : `Answer: ${answer}`) : 'Not answered'}
+            ${answered ? (isTimerRunning ? this.t('answered') : `${this.t('answer')}: ${answer}`) : this.t('notAnswered')}
           </div>`;
       
       // Show last round results if available
       if (lastRoundAnswer) {
         html += `
           <div class="team-last-round ${lastRoundCorrect ? 'team-correct' : 'team-incorrect'}">
-            Last: ${lastRoundAnswer} (${lastRoundCorrect ? '✓' : '✗'}) +${lastRoundPoints}pts
+            ${this.t('last')}: ${lastRoundAnswer} (${lastRoundCorrect ? '✓' : '✗'}) +${lastRoundPoints}pts
           </div>`;
       }
       
@@ -1546,7 +1680,7 @@ class HomeTriviaCard extends HTMLElement {
     return `
       <div class="team-management-section">
         <div class="section-header" onclick="this.getRootNode().host.toggleTeamManagement()">
-          <h3>🛠️ Team Management</h3>
+          <h3>${this.t('teamManagement')}</h3>
           <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
         </div>
         ${isExpanded ? this.renderTeamManagementContent() : ''}
@@ -1568,35 +1702,35 @@ class HomeTriviaCard extends HTMLElement {
         <div class="team-count-section">
           <div class="management-input-header">
             <ha-icon icon="mdi:account-group" class="input-icon"></ha-icon>
-            <h4>Number of Teams</h4>
+            <h4>${this.t('numberOfTeams')}</h4>
           </div>
-          <p class="input-description">How many teams will participate in the game?</p>
+          <p class="input-description">${this.t('teamCountHint')}</p>
           <select class="form-select" id="main-team-count-select">
-            <option value="1" ${currentTeamCount === 1 ? 'selected' : ''}>1 Team</option>
-            <option value="2" ${currentTeamCount === 2 ? 'selected' : ''}>2 Teams</option>
-            <option value="3" ${currentTeamCount === 3 ? 'selected' : ''}>3 Teams</option>
-            <option value="4" ${currentTeamCount === 4 ? 'selected' : ''}>4 Teams</option>
-            <option value="5" ${currentTeamCount === 5 ? 'selected' : ''}>5 Teams</option>
+            <option value="1" ${currentTeamCount === 1 ? 'selected' : ''}>1 ${this.t('team')}</option>
+            <option value="2" ${currentTeamCount === 2 ? 'selected' : ''}>2 ${this.t('team')}s</option>
+            <option value="3" ${currentTeamCount === 3 ? 'selected' : ''}>3 ${this.t('team')}s</option>
+            <option value="4" ${currentTeamCount === 4 ? 'selected' : ''}>4 ${this.t('team')}s</option>
+            <option value="5" ${currentTeamCount === 5 ? 'selected' : ''}>5 ${this.t('team')}s</option>
           </select>
         </div>
         
         <div class="team-setup-section">
           <div class="management-input-header">
             <ha-icon icon="mdi:account-group-outline" class="input-icon"></ha-icon>
-            <h4>Team Setup</h4>
+            <h4>${this.t('teamSetup')}</h4>
           </div>
-          <p class="input-description">Assign names and users to your teams</p>
+          <p class="input-description">${this.t('teamSetupHint')}</p>
           <div class="main-teams-container">
             ${Object.entries(teams).slice(0, currentTeamCount).map(([teamId, team]) => `
               <div class="main-team-item">
-                <label class="team-label">Team ${teamId.split('_')[1]}:</label>
-                <input type="text" class="main-team-input" id="main-team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
+                <label class="team-label">${this.t('team')} ${teamId.split('_')[1]}:</label>
+                <input type="text" class="main-team-input" id="main-team-${teamId.split('_')[1]}-name" placeholder="${this.t('teamName')}" 
                        value="${this.escapeHtml(team.name)}" 
                        oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
                 <select class="main-team-select" 
                         onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
                         ${isLoadingUsers ? 'disabled' : ''}>
-                  <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
+                  <option value="">${isLoadingUsers ? this.t('loadingUsers') : this.t('selectUser')}</option>
                   ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
                     `<option value="${this.escapeHtml(user.id)}" ${team.user_id === user.id ? 'selected' : ''}>
                       ${this.escapeHtml(user.name)}
@@ -1632,7 +1766,7 @@ class HomeTriviaCard extends HTMLElement {
     return `
       <div class="team-management-section">
         <div class="section-header" onclick="this.getRootNode().host.toggleGameSettings()">
-          <h3>⚙️ Game Settings</h3>
+          <h3>${this.t('gameSettings')}</h3>
           <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
         </div>
         ${isExpanded ? this.renderGameSettingsContent() : ''}
@@ -1645,26 +1779,44 @@ class HomeTriviaCard extends HTMLElement {
     const timerSensor = this._hass?.states['sensor.home_trivia_countdown_timer'];
     const currentTimerLength = this.getEffectiveFormValue('timerLength', null, timerSensor?.state || '30');
     
+    // Get the flag for the opposite language
+    const languageFlag = this.currentLanguage === 'en' ? '🇩🇪' : '🇺🇸';
+    const languageText = this.currentLanguage === 'en' ? 'Deutsch' : 'English';
+    const toggleLanguage = this.currentLanguage === 'en' ? 'de' : 'en';
+    
     return `
       <div class="team-management-content">
+        <div class="language-section" style="margin-bottom: 20px;">
+          <div class="management-input-header">
+            <ha-icon icon="mdi:translate" class="input-icon"></ha-icon>
+            <h4>${this.t('language')}</h4>
+          </div>
+          <button class="control-button secondary-button" 
+                  onclick="this.getRootNode().host.switchLanguage('${toggleLanguage}')" 
+                  style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span style="font-size: 1.2em;">${languageFlag}</span>
+            <span>${languageText}</span>
+          </button>
+        </div>
+        
         <div class="game-reset-section" style="margin-bottom: 20px;">
           <button class="control-button secondary-button" onclick="this.getRootNode().host.resetGame()" style="width: 100%;">
-            🔄 Reset Game
+            ${this.t('resetGame')}
           </button>
         </div>
         
         <div class="timer-section">
           <div class="management-input-header">
             <ha-icon icon="mdi:timer-outline" class="input-icon"></ha-icon>
-            <h4>Timer Length</h4>
+            <h4>${this.t('timerLength')}</h4>
           </div>
           <p class="input-description">How long teams have to answer each question</p>
           <select class="form-select" id="game-settings-timer-select">
-            <option value="15" ${currentTimerLength === '15' ? 'selected' : ''}>15 seconds</option>
-            <option value="20" ${currentTimerLength === '20' ? 'selected' : ''}>20 seconds</option>
-            <option value="30" ${currentTimerLength === '30' ? 'selected' : ''}>30 seconds</option>
-            <option value="45" ${currentTimerLength === '45' ? 'selected' : ''}>45 seconds</option>
-            <option value="60" ${currentTimerLength === '60' ? 'selected' : ''}>60 seconds</option>
+            <option value="15" ${currentTimerLength === '15' ? 'selected' : ''}>15 ${this.t('seconds')}</option>
+            <option value="20" ${currentTimerLength === '20' ? 'selected' : ''}>20 ${this.t('seconds')}</option>
+            <option value="30" ${currentTimerLength === '30' ? 'selected' : ''}>30 ${this.t('seconds')}</option>
+            <option value="45" ${currentTimerLength === '45' ? 'selected' : ''}>45 ${this.t('seconds')}</option>
+            <option value="60" ${currentTimerLength === '60' ? 'selected' : ''}>60 ${this.t('seconds')}</option>
           </select>
         </div>
       </div>
@@ -1683,11 +1835,11 @@ class HomeTriviaCard extends HTMLElement {
     return `
       <div class="game-controls">
         <button class="control-button primary-button" onclick="this.getRootNode().host.nextQuestion()">
-          ▶️ Next Question
+          ${this.t('nextQuestion')}
         </button>
         ${!isPlaying ? `
           <button class="control-button secondary-button" onclick="this.getRootNode().host.startNewGame()">
-            🚀 Start New Game
+            ${this.t('startNewGame')}
           </button>
         ` : ''}
       </div>
