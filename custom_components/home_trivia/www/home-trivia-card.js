@@ -1339,7 +1339,7 @@ class HomeTriviaCard extends HTMLElement {
           text-align: center;
           background: white;
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
           position: relative;
           overflow: hidden;
           border: 1px solid #f1f5f9;
@@ -1369,6 +1369,39 @@ class HomeTriviaCard extends HTMLElement {
           color: #2563eb;
           margin-bottom: 16px;
           font-weight: 800;
+        }
+        /* Rank display */
+        .team-rank {
+          font-size: 0.9em;
+          font-weight: 700;
+          color: #64748b;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        /* Medal icon */
+        .team-medal {
+          font-size: 1.5em;
+          margin-bottom: 8px;
+        }
+        /* Rank-specific styling */
+        .rank-1::before {
+          background: #ffd700 !important; /* Gold */
+        }
+        .rank-1 .team-medal {
+          color: #ffd700;
+        }
+        .rank-2::before {
+          background: #c0c0c0 !important; /* Silver */
+        }
+        .rank-2 .team-medal {
+          color: #c0c0c0;
+        }
+        .rank-3::before {
+          background: #cd7f32 !important; /* Bronze */
+        }
+        .rank-3 .team-medal {
+          color: #cd7f32;
         }
         .team-answer {
           padding: 8px 16px;
@@ -1840,42 +1873,63 @@ class HomeTriviaCard extends HTMLElement {
     const countdown = this._hass.states['sensor.home_trivia_countdown_current'];
     const isTimerRunning = countdown && countdown.attributes && countdown.attributes.is_running;
     
+    // Get all participating teams and their data
+    const allTeams = [];
     for (let i = 1; i <= 5; i++) {
       const team = this._hass.states[`sensor.home_trivia_team_${i}`];
-      if (!team || !team.attributes.participating) continue;
-
-      const answered = team.attributes.answered;
-      const answer = team.attributes.answer;
-      const points = team.attributes.points || 0;
+      if (team && team.attributes.participating) {
+        allTeams.push({
+          team_number: i,
+          name: team.state,
+          points: team.attributes.points || 0,
+          answered: team.attributes.answered,
+          answer: team.attributes.answer,
+          last_round_answer: team.attributes.last_round_answer,
+          last_round_correct: team.attributes.last_round_correct,
+          last_round_points: team.attributes.last_round_points || 0
+        });
+      }
+    }
+    
+    // Sort teams by points in descending order for leaderboard ranking
+    const sortedTeams = allTeams.sort((a, b) => b.points - a.points);
+    
+    // Render teams in rank order
+    sortedTeams.forEach((team, index) => {
+      const rank = index + 1;
+      const { team_number, name, points, answered, answer, last_round_answer, last_round_correct, last_round_points } = team;
       
-      // Round results for transparency
-      const lastRoundAnswer = team.attributes.last_round_answer;
-      const lastRoundCorrect = team.attributes.last_round_correct;
-      const lastRoundPoints = team.attributes.last_round_points || 0;
-
-      // Determine card state classes
+      // Determine card state classes with rank-specific styling
       let cardClasses = 'team-card';
+      if (rank <= 3) {
+        cardClasses += ` rank-${rank}`;
+      }
       if (isTimerRunning) {
-        // When timer is running: neutral color, light green if answered
         cardClasses += answered ? ' team-card-answered-during-timer' : ' team-card-neutral';
       } else {
-        // When timer is not running: normal styling
         cardClasses += ' team-card-results';
       }
 
+      // Determine which medal to show
+      let medalIcon = '';
+      if (rank === 1) medalIcon = 'mdi:medal-outline';
+      if (rank === 2) medalIcon = 'mdi:medal-outline';
+      if (rank === 3) medalIcon = 'mdi:medal-outline';
+      
       html += `
         <div class="${cardClasses}">
-          <div class="team-name">${team.state}</div>
-          <div class="team-points">${points} points</div>`;
+          <div class="team-rank">#${rank}</div>
+          ${medalIcon ? `<ha-icon icon="${medalIcon}" class="team-medal"></ha-icon>` : ''}
+          <div class="team-name">${name}</div>
+          <div id="team-points-${team_number}" class="team-points">${points} points</div>
+      `;
       
       if (isTimerRunning) {
-        // During timer: show answered status only
         html += `
           <div class="team-answer-status">
             ${answered ? this.t('answered') : this.t('notAnswered')}
           </div>`;
       } else {
-        // When timer not running: show current answer if available
         if (answered && answer) {
           html += `
             <div class="team-current-answer">
@@ -1883,22 +1937,21 @@ class HomeTriviaCard extends HTMLElement {
             </div>`;
         }
         
-        // Show last round results as badges if available
-        if (lastRoundAnswer) {
+        if (last_round_answer) {
           html += `
             <div class="team-badges">
-              <div class="team-answer-badge ${lastRoundCorrect ? 'badge-correct' : 'badge-incorrect'}">
-                ${lastRoundAnswer}
+              <div class="team-answer-badge ${last_round_correct ? 'badge-correct' : 'badge-incorrect'}">
+                ${last_round_answer}
               </div>
-              <div class="team-points-badge ${lastRoundCorrect ? 'badge-correct' : 'badge-incorrect'}">
-                +${lastRoundPoints}pts
+              <div class="team-points-badge ${last_round_correct ? 'badge-correct' : 'badge-incorrect'}">
+                +${last_round_points}pts
               </div>
             </div>`;
         }
       }
       
       html += `</div>`;
-    }
+    });
     
     html += '</div>';
     return html;
