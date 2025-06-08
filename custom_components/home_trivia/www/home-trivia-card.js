@@ -123,6 +123,28 @@ class HomeTriviaCard extends HTMLElement {
     const previousHass = this._hass;
     this._hass = hass;
     
+    // --- Start of new/modified code for points animation ---
+    if (previousHass) {
+      // Loop through teams to check for score updates
+      for (let i = 1; i <= 5; i++) {
+        const teamState = hass.states[`sensor.home_trivia_team_${i}`];
+        const prevTeamState = previousHass.states[`sensor.home_trivia_team_${i}`];
+
+        if (teamState && prevTeamState) {
+          const points = teamState.attributes.last_round_points;
+          const prevPoints = prevTeamState.attributes.last_round_points;
+          
+          // Trigger if last_round_points just became positive
+          // and the round results aren't from a previous question
+          // (check against total points to avoid re-triggering on simple refresh)
+          if (points > 0 && points !== prevPoints && teamState.attributes.points !== prevTeamState.attributes.points) {
+            this.triggerPointsAnimation(i, points);
+          }
+        }
+      }
+    }
+    // --- End of new/modified code ---
+    
     // Only update if this is the first time setting hass, or if we need to show/hide splash screen
     if (!previousHass || 
         this.shouldShowSplashScreen() !== this.shouldShowSplashScreen(previousHass)) {
@@ -1665,6 +1687,29 @@ class HomeTriviaCard extends HTMLElement {
           white-space: nowrap;
           color: var(--primary-text-color);
         }
+        
+        /* Points Animation Styles */
+        .points-animator {
+          position: absolute;
+          z-index: 9999;
+          background: linear-gradient(135deg, #059669, #047857);
+          color: white;
+          padding: 8px 12px;
+          border-radius: 20px;
+          font-weight: 800;
+          font-size: 1.1em;
+          text-align: center;
+          box-shadow: 0 4px 20px rgba(5, 150, 105, 0.4);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          pointer-events: none;
+          opacity: 0;
+          transform: scale(0);
+          transition: all 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+          white-space: nowrap;
+          letter-spacing: 0.5px;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
         @media (max-width: 768px) {
           .main-team-item {
             grid-template-columns: 1fr;
@@ -1820,7 +1865,7 @@ class HomeTriviaCard extends HTMLElement {
 
     let html = `
       <div class="question-section">
-        <div class="${timerClasses}">${timerText}</div>
+        <div id="countdown-timer-display" class="${timerClasses}">${timerText}</div>
         <div class="countdown-progress-container">
           <div class="countdown-progress-bar">
             <div class="countdown-progress-fill" style="width: ${progressPercentage}%"></div>
@@ -1918,6 +1963,7 @@ class HomeTriviaCard extends HTMLElement {
       
       html += `
         <div class="${cardClasses}">
+
           <div class="team-rank">#${rank}</div>
           ${medalIcon ? `<ha-icon icon="${medalIcon}" class="team-medal"></ha-icon>` : ''}
           <div class="team-name">${name}</div>
@@ -2127,6 +2173,56 @@ class HomeTriviaCard extends HTMLElement {
         ` : ''}
       </div>
     `;
+  }
+
+  triggerPointsAnimation(teamIndex, points) {
+    // Find the timer and target team elements
+    const startElement = this.shadowRoot.getElementById('countdown-timer-display');
+    const endElement = this.shadowRoot.getElementById(`team-points-${teamIndex}`);
+
+    if (!startElement || !endElement) {
+      console.warn('Animation elements not found.');
+      return;
+    }
+
+    // Get screen coordinates
+    const startRect = startElement.getBoundingClientRect();
+    const endRect = endElement.getBoundingClientRect();
+
+    // Create the animator element
+    const animator = document.createElement('div');
+    animator.className = 'points-animator';
+    animator.textContent = `+${points}`;
+    this.shadowRoot.appendChild(animator);
+
+    // Set initial position at the center of the start element
+    const initialTop = startRect.top + (startRect.height / 2) - (animator.offsetHeight / 2);
+    const initialLeft = startRect.left + (startRect.width / 2) - (animator.offsetWidth / 2);
+    animator.style.top = `${initialTop}px`;
+    animator.style.left = `${initialLeft}px`;
+    animator.style.transform = 'scale(0)';
+
+    // Use requestAnimationFrame to ensure the element is painted before animating
+    requestAnimationFrame(() => {
+      // 1. Make it appear and grow
+      animator.style.opacity = '1';
+      animator.style.transform = 'scale(1)';
+
+      // 2. After a short delay, move it to the destination and fade it out
+      setTimeout(() => {
+        const finalTop = endRect.top + (endRect.height / 2);
+        const finalLeft = endRect.left + (endRect.width / 2);
+        animator.style.top = `${finalTop}px`;
+        animator.style.left = `${finalLeft}px`;
+        animator.style.transform = 'scale(0)';
+        animator.style.opacity = '0';
+      }, 100); // 100ms delay to ensure the appear animation is visible
+    });
+
+    // 3. Clean up the element from the DOM after the animation is complete
+    setTimeout(() => {
+      animator.remove();
+    }, 1000); // Must be > transition duration (0.8s)
   }
 
   async selectAnswer(answer) {
