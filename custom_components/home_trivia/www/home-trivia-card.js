@@ -17,6 +17,9 @@ class HomeTriviaCard extends HTMLElement {
     this.usersLoaded = false;
     this._isLoadingUsers = false;
     
+    // Cache for answer selection state to prevent blinking
+    this._lastUserTeamAnswer = null;
+    
     // Initialize optimistic local state for form values
     this._pendingFormValues = {
       difficulty: null,
@@ -156,8 +159,16 @@ class HomeTriviaCard extends HTMLElement {
         this.requestUpdate();
       }
     } else {
-      // Always update main game screen
-      this.requestUpdate();
+      // For main game screen, check if anything significant has changed
+      const currentUserAnswer = this.getCurrentUserTeamAnswer();
+      const shouldUpdate = !previousHass || 
+                          currentUserAnswer !== this._lastUserTeamAnswer ||
+                          this.hasSignificantGameStateChange(previousHass, hass);
+      
+      if (shouldUpdate) {
+        this._lastUserTeamAnswer = currentUserAnswer;
+        this.requestUpdate();
+      }
     }
   }
 
@@ -183,6 +194,70 @@ class HomeTriviaCard extends HTMLElement {
       activeElement.tagName === 'SELECT' || 
       activeElement.tagName === 'TEXTAREA'
     );
+  }
+
+  // Check if significant game state has changed requiring a re-render
+  hasSignificantGameStateChange(previousHass, currentHass) {
+    if (!previousHass || !currentHass) return true;
+    
+    // Check critical sensors that affect the display
+    const criticalSensors = [
+      'sensor.home_trivia_current_question',
+      'sensor.home_trivia_countdown_current',
+      'sensor.home_trivia_game_status'
+    ];
+    
+    // Check team states (for points, names, etc.)
+    const teamSensors = [];
+    for (let i = 1; i <= 5; i++) {
+      teamSensors.push(`sensor.home_trivia_team_${i}`);
+    }
+    
+    const allSensors = [...criticalSensors, ...teamSensors];
+    
+    for (const sensor of allSensors) {
+      const prevState = previousHass.states[sensor];
+      const currentState = currentHass.states[sensor];
+      
+      // If sensor appeared or disappeared
+      if (!!prevState !== !!currentState) return true;
+      
+      // If both exist, check for changes
+      if (prevState && currentState) {
+        // Check state value
+        if (prevState.state !== currentState.state) return true;
+        
+        // Check key attributes that affect display
+        const prevAttrs = prevState.attributes || {};
+        const currentAttrs = currentState.attributes || {};
+        
+        // For teams, check points, names, participating status
+        if (sensor.includes('team_')) {
+          const keyAttrs = ['points', 'participating', 'last_round_points'];
+          for (const attr of keyAttrs) {
+            if (prevAttrs[attr] !== currentAttrs[attr]) return true;
+          }
+        }
+        
+        // For questions, check if question changed
+        if (sensor.includes('current_question')) {
+          if (prevAttrs.question !== currentAttrs.question) return true;
+        }
+        
+        // For countdown, check timer state
+        if (sensor.includes('countdown')) {
+          const timerAttrs = ['is_running'];
+          for (const attr of timerAttrs) {
+            if (prevAttrs[attr] !== currentAttrs[attr]) return true;
+          }
+          // Also check if time has decreased significantly (more than 2 seconds)
+          const timeDiff = Math.abs((prevState.state || 0) - (currentState.state || 0));
+          if (timeDiff >= 2) return true;
+        }
+      }
+    }
+    
+    return false; // No significant changes detected
   }
 
   // Check if there are any pending form changes that haven't been sent to backend yet
@@ -1248,7 +1323,7 @@ class HomeTriviaCard extends HTMLElement {
           cursor: pointer;
           font-size: 1.1em;
           font-weight: 600;
-          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          transition: all 0.15s ease-out;
           text-align: left;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
           color: #1e293b;
@@ -1259,6 +1334,17 @@ class HomeTriviaCard extends HTMLElement {
           border-color: #2563eb;
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
+        }
+        .answer-button.selected {
+          background: #10b981;
+          color: white;
+          border-color: #10b981;
+          box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+        .answer-button.selected:hover {
+          background: #059669;
+          border-color: #059669;
+          box-shadow: 0 8px 24px rgba(5, 150, 105, 0.3);
         }
         }
         .countdown-timer {
@@ -1876,15 +1962,18 @@ class HomeTriviaCard extends HTMLElement {
     `;
 
     if (!isTimeUp) {
+      // Get current user's team selected answer
+      const selectedAnswer = this.getCurrentUserTeamAnswer();
+      
       html += `
         <div class="answers-grid">
-          <div class="answer-button" onclick="this.getRootNode().host.selectAnswer('A')">
+          <div class="answer-button${selectedAnswer === 'A' ? ' selected' : ''}" onclick="this.getRootNode().host.selectAnswer('A')">
             A) ${currentQuestion.attributes.answer_a}
           </div>
-          <div class="answer-button" onclick="this.getRootNode().host.selectAnswer('B')">
+          <div class="answer-button${selectedAnswer === 'B' ? ' selected' : ''}" onclick="this.getRootNode().host.selectAnswer('B')">
             B) ${currentQuestion.attributes.answer_b}
           </div>
-          <div class="answer-button" onclick="this.getRootNode().host.selectAnswer('C')">
+          <div class="answer-button${selectedAnswer === 'C' ? ' selected' : ''}" onclick="this.getRootNode().host.selectAnswer('C')">
             C) ${currentQuestion.attributes.answer_c}
           </div>
         </div>
@@ -2223,6 +2312,25 @@ class HomeTriviaCard extends HTMLElement {
     setTimeout(() => {
       animator.remove();
     }, 1000); // Must be > transition duration (0.8s)
+  }
+
+  getCurrentUserTeamAnswer() {
+    if (!this._hass || !this._hass.user) {
+      return null;
+    }
+
+    // Find which team the current user belongs to
+    const currentUserId = this._hass.user.id;
+    
+    // Check each team to see if current user is assigned to it
+    for (let i = 1; i <= 5; i++) {
+      const teamState = this._hass.states[`sensor.home_trivia_team_${i}`];
+      if (teamState && teamState.attributes.user_id === currentUserId) {
+        return teamState.attributes.answer;
+      }
+    }
+    
+    return null;
   }
 
   async selectAnswer(answer) {
