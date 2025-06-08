@@ -1005,44 +1005,47 @@ class HomeTriviaCard extends HTMLElement {
     }
   }
 
-  updateTeamSetup(teamCount) {
-    // Update the splash screen to show the correct number of teams
-    const splashTeamsContainer = this.shadowRoot.querySelector('.splash-teams-container');
-    if (splashTeamsContainer) {
-      const teams = this.getTeams();
-      const users = this.homeAssistantUsers || [];
-      const isLoadingUsers = this._isLoadingUsers || (!this.usersLoaded && users.length === 0);
+  // Reusable function to generate team setup HTML
+  renderTeamSetupItems(teams, users, isLoadingUsers, teamCount, containerType = 'splash') {
+    const cssClass = containerType === 'splash' ? 'splash-team' : 'main-team';
+    const useEffectiveValues = containerType === 'splash';
+    
+    return Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => {
+      // Use effective values for splash screen (pending changes), direct values for main game
+      const teamName = useEffectiveValues ? 
+        this.getEffectiveFormValue('teamNames', teamId, team.name) : team.name;
+      const userId = useEffectiveValues ? 
+        this.getEffectiveFormValue('teamUserIds', teamId, team.user_id) : team.user_id;
       
-      splashTeamsContainer.innerHTML = Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => {
-        // Use effective values for team name and user ID
-        const effectiveTeamName = this.getEffectiveFormValue('teamNames', teamId, team.name);
-        const effectiveUserId = this.getEffectiveFormValue('teamUserIds', teamId, team.user_id);
-        
-        return `
-        <div class="splash-team-item">
-          <label class="team-label">Team ${teamId.split('_')[1]}:</label>
-          <input type="text" class="splash-team-input" id="team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
-                 value="${this.escapeHtml(effectiveTeamName)}" 
+      const teamNumber = teamId.split('_')[1];
+      const inputId = `${containerType === 'splash' ? 'team' : 'main-team'}-${teamNumber}-name`;
+      
+      return `
+        <div class="${cssClass}-item">
+          <label class="team-label">Team ${teamNumber}:</label>
+          <input type="text" class="${cssClass}-input" id="${inputId}" placeholder="Team Name" 
+                 value="${this.escapeHtml(teamName)}" 
                  oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
-          <select class="splash-team-select" 
+          <select class="${cssClass}-select" 
                   onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
                   ${isLoadingUsers ? 'disabled' : ''}>
             <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
             ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
-              `<option value="${this.escapeHtml(user.id)}" ${effectiveUserId === user.id ? 'selected' : ''}>
+              `<option value="${this.escapeHtml(user.id)}" ${userId === user.id ? 'selected' : ''}>
                 ${this.escapeHtml(user.name)}
               </option>`
             ).join('')}
           </select>
         </div>
       `;
-      }).join('');
-    }
-    
-    // Update team participation status for all teams
+    }).join('');
+  }
+
+  // Centralized function to update team participation status
+  updateTeamParticipation(teamCount, keyPrefix = 'teamParticipation') {
     for (let i = 1; i <= 5; i++) {
       const participating = i <= teamCount;
-      this.debouncedServiceCall(`teamParticipation_${i}`, () => {
+      this.debouncedServiceCall(`${keyPrefix}_${i}`, () => {
         this._hass.callService('home_trivia', 'update_team_participating', {
           team_id: `team_${i}`,
           participating: participating
@@ -1051,45 +1054,34 @@ class HomeTriviaCard extends HTMLElement {
     }
   }
 
+  updateTeamSetup(teamCount) {
+    // Update the splash screen to show the correct number of teams
+    const splashTeamsContainer = this.shadowRoot.querySelector('.splash-teams-container');
+    if (splashTeamsContainer) {
+      const teams = this.getTeams();
+      const users = this.homeAssistantUsers || [];
+      const isLoadingUsers = this._isLoadingUsers || (!this.usersLoaded && users.length === 0);
+      
+      splashTeamsContainer.innerHTML = this.renderTeamSetupItems(teams, users, isLoadingUsers, teamCount, 'splash');
+    }
+    
+    // Update team participation status for all teams
+    this.updateTeamParticipation(teamCount, 'teamParticipation');
+  }
+
   updateMainTeamSetup(teamCount) {
     // Update the main game team management section to show the correct number of teams
-    // This uses the same logic as updateTeamSetup() from splash screen
     const mainTeamsContainer = this.shadowRoot.querySelector('.main-teams-container');
     if (mainTeamsContainer) {
       const teams = this.getTeams();
       const users = this.homeAssistantUsers || [];
       const isLoadingUsers = this._isLoadingUsers || (!this.usersLoaded && users.length === 0);
       
-      mainTeamsContainer.innerHTML = Object.entries(teams).slice(0, teamCount).map(([teamId, team]) => `
-        <div class="main-team-item">
-          <label class="team-label">Team ${teamId.split('_')[1]}:</label>
-          <input type="text" class="main-team-input" id="main-team-${teamId.split('_')[1]}-name" placeholder="Team Name" 
-                 value="${this.escapeHtml(team.name)}" 
-                 oninput="this.getRootNode().host.updateTeamName('${teamId}', this.value)">
-          <select class="main-team-select" 
-                  onchange="this.getRootNode().host.updateTeamUserId('${teamId}', this.value)"
-                  ${isLoadingUsers ? 'disabled' : ''}>
-            <option value="">${isLoadingUsers ? 'Loading users...' : 'Select user...'}</option>
-            ${users.filter(user => !user.name.startsWith('Home Assistant')).map(user => 
-              `<option value="${this.escapeHtml(user.id)}" ${team.user_id === user.id ? 'selected' : ''}>
-                ${this.escapeHtml(user.name)}
-              </option>`
-            ).join('')}
-          </select>
-        </div>
-      `).join('');
+      mainTeamsContainer.innerHTML = this.renderTeamSetupItems(teams, users, isLoadingUsers, teamCount, 'main');
     }
     
-    // Update team participation status for all teams (same logic as splash screen)
-    for (let i = 1; i <= 5; i++) {
-      const participating = i <= teamCount;
-      this.debouncedServiceCall(`mainTeamParticipation_${i}`, () => {
-        this._hass.callService('home_trivia', 'update_team_participating', {
-          team_id: `team_${i}`,
-          participating: participating
-        });
-      }, 100 + (i * 50));
-    }
+    // Update team participation status for all teams
+    this.updateTeamParticipation(teamCount, 'mainTeamParticipation');
   }
 
   async startGame() {
