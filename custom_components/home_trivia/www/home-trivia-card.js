@@ -112,6 +112,20 @@ class HomeTriviaCard extends HTMLElement {
     this.requestUpdate();
   }
 
+  // Get category icon for display
+  getCategoryIcon(category) {
+    const iconMap = {
+      'Fun Facts': 'mdi:lightbulb',
+      'History': 'mdi:castle',
+      'Geography': 'mdi:earth',
+      'Music': 'mdi:music',
+      'Literature': 'mdi:book-open-page-variant',
+      'Science': 'mdi:flask',
+      'Politics': 'mdi:bank'
+    };
+    return iconMap[category] || 'mdi:help-circle';
+  }
+
   setConfig(config) {
     if (!config) {
       throw new Error('Invalid configuration');
@@ -1294,20 +1308,45 @@ class HomeTriviaCard extends HTMLElement {
           margin-bottom: 40px;
           text-align: center;
         }
-        .question-title {
-          font-size: 1.6em;
-          font-weight: 700;
-          margin-bottom: 20px;
-          color: var(--primary-text-color);
+        .question-category {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          font-size: 1.0em;
+          font-weight: 600;
+          margin-bottom: 16px;
+          color: var(--secondary-text-color, #64748b);
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
+        .question-category ha-icon {
+          --mdc-icon-size: 20px;
+          color: var(--primary-color, #2563eb);
+        }
         .question-text {
-          font-size: 1.2em;
-          margin-bottom: 24px;
+          font-size: 1.4em;
+          margin-bottom: 32px;
           color: var(--primary-text-color);
-          line-height: 1.6;
-          font-weight: 500;
+          line-height: 1.5;
+          font-weight: 700;
+          background: var(--card-background-color, #ffffff);
+          padding: 24px;
+          border-radius: 16px;
+          border: 3px solid var(--primary-color, #2563eb);
+          box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
+        }
+        .question-ready-title {
+          font-size: 1.3em;
+          font-weight: 600;
+          margin-bottom: 16px;
+          color: var(--secondary-text-color, #64748b);
+        }
+        .question-ready-text {
+          font-size: 1.1em;
+          color: var(--secondary-text-color, #64748b);
+          font-weight: 400;
+          line-height: 1.4;
         }
         .answers-grid {
           display: grid;
@@ -1823,11 +1862,12 @@ class HomeTriviaCard extends HTMLElement {
           .game-content {
             padding: 24px 16px;
           }
-          .question-title {
-            font-size: 1.3em;
+          .question-category {
+            font-size: 0.9em;
           }
           .question-text {
-            font-size: 1.1em;
+            font-size: 1.2em;
+            padding: 20px;
           }
           .answer-button {
             padding: 16px 20px;
@@ -1926,8 +1966,8 @@ class HomeTriviaCard extends HTMLElement {
     if (!currentQuestion || !currentQuestion.attributes.question) {
       return `
         <div class="question-section">
-          <div class="question-title">Ready for the next question?</div>
-          <div class="question-text">${this.t('clickNextQuestion')}</div>
+          <div class="question-ready-title">Ready for the next question?</div>
+          <div class="question-ready-text">${this.t('clickNextQuestion')}</div>
         </div>
       `;
     }
@@ -1966,7 +2006,10 @@ class HomeTriviaCard extends HTMLElement {
             <div class="countdown-progress-fill" style="width: ${progressPercentage}%"></div>
           </div>
         </div>
-        <div class="question-title">${currentQuestion.attributes.category}</div>
+        <div class="question-category">
+          <ha-icon icon="${this.getCategoryIcon(currentQuestion.attributes.category)}"></ha-icon>
+          <span>${currentQuestion.attributes.category}</span>
+        </div>
         <div class="question-text">${currentQuestion.attributes.question}</div>
     `;
 
