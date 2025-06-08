@@ -269,6 +269,8 @@ async def _register_services(hass: HomeAssistant) -> None:
                     else:
                         _LOGGER.warning(f"Could not find team sensor entity {unique_id}")
             return wrapper
+        return decorator
+    
     # Fallback handlers for team services
     async def _fallback_team_name(call, team_number: str, hass: HomeAssistant):
         """Fallback handler for team name updates."""
