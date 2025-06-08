@@ -15,6 +15,22 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+class HomeTriviaBaseSensor(SensorEntity, RestoreEntity):
+    """Base class for Home Trivia sensors that handles state restoration."""
+
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which provides state restoration."""
+        await super().async_added_to_hass()
+        if (last_state := await self.async_get_last_state()) is not None:
+            await self._restore_state(last_state)
+            _LOGGER.debug(f"Restored state for {self.name}: {getattr(self, '_state', 'N/A')}")
+
+    async def _restore_state(self, last_state) -> None:
+        """Override this method in subclasses to handle specific state restoration."""
+        # Default implementation - subclasses should override this
+        pass
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -70,7 +86,7 @@ async def async_setup_entry(
     async_add_entities(entities, True)
 
 
-class HomeTriviaGameStatusSensor(SensorEntity, RestoreEntity):
+class HomeTriviaGameStatusSensor(HomeTriviaBaseSensor):
     """Representation of a Home Trivia main game status sensor."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
@@ -85,28 +101,24 @@ class HomeTriviaGameStatusSensor(SensorEntity, RestoreEntity):
         self._difficulty_level = "Easy"
         self._timer_length = 30
 
-    async def async_added_to_hass(self) -> None:
-        """Called when entity is added to hass."""
-        await super().async_added_to_hass()
-        
-        # Restore previous state if available
-        if (last_state := await self.async_get_last_state()) is not None:
-            try:
-                # Restore the game state
-                self._state = last_state.state
-                _LOGGER.debug("Restored game state: %s", self._state)
+    async def _restore_state(self, last_state) -> None:
+        """Restore state from last known state."""
+        try:
+            # Restore the game state
+            self._state = last_state.state
+            _LOGGER.debug("Restored game state: %s", self._state)
+            
+            # Restore attributes if available
+            if last_state.attributes:
+                self._team_count = int(last_state.attributes.get("team_count", 2))
+                self._difficulty_level = last_state.attributes.get("difficulty_level", "Easy")
+                self._timer_length = int(last_state.attributes.get("timer_length", 30))
                 
-                # Restore attributes if available
-                if last_state.attributes:
-                    self._team_count = int(last_state.attributes.get("team_count", 2))
-                    self._difficulty_level = last_state.attributes.get("difficulty_level", "Easy")
-                    self._timer_length = int(last_state.attributes.get("timer_length", 30))
-                    
-                    _LOGGER.info("Restored game settings - Team Count: %d, Difficulty: %s, Timer: %d", 
-                               self._team_count, self._difficulty_level, self._timer_length)
-                    
-            except (ValueError, TypeError) as e:
-                _LOGGER.warning("Could not restore game status state: %s", e)
+                _LOGGER.info("Restored game settings - Team Count: %d, Difficulty: %s, Timer: %d", 
+                           self._team_count, self._difficulty_level, self._timer_length)
+                
+        except (ValueError, TypeError) as e:
+            _LOGGER.warning("Could not restore game status state: %s", e)
 
     @property
     def state(self) -> str:
@@ -149,7 +161,7 @@ class HomeTriviaGameStatusSensor(SensorEntity, RestoreEntity):
         _LOGGER.debug("Updating Home Trivia main sensor")
 
 
-class HomeTriviaTeamSensor(SensorEntity, RestoreEntity):
+class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
     """Representation of a Home Trivia team sensor."""
 
     def __init__(self, team_number: int) -> None:
@@ -168,32 +180,28 @@ class HomeTriviaTeamSensor(SensorEntity, RestoreEntity):
         self._last_round_points = 0
         self._user_id = None
 
-    async def async_added_to_hass(self) -> None:
-        """Called when entity is added to hass."""
-        await super().async_added_to_hass()
-        
-        # Restore previous state if available
-        if (last_state := await self.async_get_last_state()) is not None:
-            try:
-                # Restore team name from the state
-                self._team_name = last_state.state
-                _LOGGER.debug("Restored team %d name: %s", self._team_number, self._team_name)
+    async def _restore_state(self, last_state) -> None:
+        """Restore state from last known state."""
+        try:
+            # Restore team name from the state
+            self._team_name = last_state.state
+            _LOGGER.debug("Restored team %d name: %s", self._team_number, self._team_name)
+            
+            # Restore attributes if available
+            if last_state.attributes:
+                self._points = int(last_state.attributes.get("points", 0))
+                self._participating = bool(last_state.attributes.get("participating", True))
+                self._answer = last_state.attributes.get("answer")
+                self._answered = bool(last_state.attributes.get("answered", False))
+                self._last_round_answer = last_state.attributes.get("last_round_answer")
+                self._last_round_correct = bool(last_state.attributes.get("last_round_correct", False))
+                self._last_round_points = int(last_state.attributes.get("last_round_points", 0))
+                self._user_id = last_state.attributes.get("user_id")
                 
-                # Restore attributes if available
-                if last_state.attributes:
-                    self._points = int(last_state.attributes.get("points", 0))
-                    self._participating = bool(last_state.attributes.get("participating", True))
-                    self._answer = last_state.attributes.get("answer")
-                    self._answered = bool(last_state.attributes.get("answered", False))
-                    self._last_round_answer = last_state.attributes.get("last_round_answer")
-                    self._last_round_correct = bool(last_state.attributes.get("last_round_correct", False))
-                    self._last_round_points = int(last_state.attributes.get("last_round_points", 0))
-                    self._user_id = last_state.attributes.get("user_id")
-                    
-                    _LOGGER.debug("Restored team %d attributes", self._team_number)
-                    
-            except (ValueError, TypeError) as e:
-                _LOGGER.warning("Could not restore team %d state: %s", self._team_number, e)
+                _LOGGER.debug("Restored team %d attributes", self._team_number)
+                
+        except (ValueError, TypeError) as e:
+            _LOGGER.warning("Could not restore team %d state: %s", self._team_number, e)
 
     @property
     def state(self) -> str:
@@ -264,7 +272,7 @@ class HomeTriviaTeamSensor(SensorEntity, RestoreEntity):
         _LOGGER.debug("Updating team %d sensor", self._team_number)
 
 
-class HomeTriviaCountdownTimerSensor(SensorEntity, RestoreEntity):
+class HomeTriviaCountdownTimerSensor(HomeTriviaBaseSensor):
     """Sensor for the countdown timer length setting."""
 
     def __init__(self) -> None:
@@ -274,17 +282,13 @@ class HomeTriviaCountdownTimerSensor(SensorEntity, RestoreEntity):
         self._attr_icon = "mdi:timer"
         self._timer_length = 30  # Default timer length in seconds
 
-    async def async_added_to_hass(self) -> None:
-        """Called when entity is added to hass."""
-        await super().async_added_to_hass()
-        
-        # Restore previous state if available
-        if (last_state := await self.async_get_last_state()) is not None:
-            try:
-                self._timer_length = int(last_state.state)
-                _LOGGER.debug("Restored timer length: %d", self._timer_length)
-            except (ValueError, TypeError) as e:
-                _LOGGER.warning("Could not restore timer length: %s", e)
+    async def _restore_state(self, last_state) -> None:
+        """Restore state from last known state."""
+        try:
+            self._timer_length = int(last_state.state)
+            _LOGGER.debug("Restored timer length: %d", self._timer_length)
+        except (ValueError, TypeError) as e:
+            _LOGGER.warning("Could not restore timer length: %s", e)
 
     @property
     def state(self) -> int:
@@ -462,7 +466,7 @@ class HomeTriviaCurrentQuestionSensor(SensorEntity):
         self.async_write_ha_state()
 
 
-class HomeTriviaRoundCounterSensor(SensorEntity, RestoreEntity):
+class HomeTriviaRoundCounterSensor(HomeTriviaBaseSensor):
     """Sensor for tracking the current round number."""
 
     def __init__(self) -> None:
@@ -472,17 +476,13 @@ class HomeTriviaRoundCounterSensor(SensorEntity, RestoreEntity):
         self._attr_icon = "mdi:counter"
         self._round_count = 0
 
-    async def async_added_to_hass(self) -> None:
-        """Called when entity is added to hass."""
-        await super().async_added_to_hass()
-        
-        # Restore previous state if available
-        if (last_state := await self.async_get_last_state()) is not None:
-            try:
-                self._round_count = int(last_state.state)
-                _LOGGER.debug("Restored round count: %d", self._round_count)
-            except (ValueError, TypeError) as e:
-                _LOGGER.warning("Could not restore round count: %s", e)
+    async def _restore_state(self, last_state) -> None:
+        """Restore state from last known state."""
+        try:
+            self._round_count = int(last_state.state)
+            _LOGGER.debug("Restored round count: %d", self._round_count)
+        except (ValueError, TypeError) as e:
+            _LOGGER.warning("Could not restore round count: %s", e)
 
     @property
     def state(self) -> int:
@@ -507,7 +507,7 @@ class HomeTriviaRoundCounterSensor(SensorEntity, RestoreEntity):
         self.async_write_ha_state()
 
 
-class HomeTriviaPlayedQuestionsSensor(SensorEntity, RestoreEntity):
+class HomeTriviaPlayedQuestionsSensor(HomeTriviaBaseSensor):
     """Sensor for tracking played questions."""
 
     def __init__(self) -> None:
@@ -518,19 +518,15 @@ class HomeTriviaPlayedQuestionsSensor(SensorEntity, RestoreEntity):
         self._played_questions = 0
         self._played_question_ids = []
 
-    async def async_added_to_hass(self) -> None:
-        """Called when entity is added to hass."""
-        await super().async_added_to_hass()
-        
-        # Restore previous state if available
-        if (last_state := await self.async_get_last_state()) is not None:
-            try:
-                self._played_questions = int(last_state.state)
-                if last_state.attributes and "played_question_ids" in last_state.attributes:
-                    self._played_question_ids = last_state.attributes["played_question_ids"]
-                _LOGGER.debug("Restored played questions: %d", self._played_questions)
-            except (ValueError, TypeError) as e:
-                _LOGGER.warning("Could not restore played questions: %s", e)
+    async def _restore_state(self, last_state) -> None:
+        """Restore state from last known state."""
+        try:
+            self._played_questions = int(last_state.state)
+            if last_state.attributes and "played_question_ids" in last_state.attributes:
+                self._played_question_ids = last_state.attributes["played_question_ids"]
+            _LOGGER.debug("Restored played questions: %d", self._played_questions)
+        except (ValueError, TypeError) as e:
+            _LOGGER.warning("Could not restore played questions: %s", e)
 
     @property
     def state(self) -> int:
@@ -559,7 +555,7 @@ class HomeTriviaPlayedQuestionsSensor(SensorEntity, RestoreEntity):
         self.async_write_ha_state()
 
 
-class HomeTriviaHighscoreSensor(SensorEntity, RestoreEntity):
+class HomeTriviaHighscoreSensor(HomeTriviaBaseSensor):
     """Sensor for tracking high scores."""
 
     def __init__(self) -> None:
@@ -572,21 +568,17 @@ class HomeTriviaHighscoreSensor(SensorEntity, RestoreEntity):
         self._highscore_team = "No Team"
         self._total_rounds = 0
 
-    async def async_added_to_hass(self) -> None:
-        """Called when entity is added to hass."""
-        await super().async_added_to_hass()
-        
-        # Restore previous state if available
-        if (last_state := await self.async_get_last_state()) is not None:
-            try:
-                self._highscore_total = int(last_state.state)
-                if last_state.attributes:
-                    self._highscore_average = float(last_state.attributes.get("average_points", 0.0))
-                    self._highscore_team = last_state.attributes.get("team_name", "No Team")
-                    self._total_rounds = int(last_state.attributes.get("total_rounds", 0))
-                _LOGGER.debug("Restored highscore: %d", self._highscore_total)
-            except (ValueError, TypeError) as e:
-                _LOGGER.warning("Could not restore highscore: %s", e)
+    async def _restore_state(self, last_state) -> None:
+        """Restore state from last known state."""
+        try:
+            self._highscore_total = int(last_state.state)
+            if last_state.attributes:
+                self._highscore_average = float(last_state.attributes.get("average_points", 0.0))
+                self._highscore_team = last_state.attributes.get("team_name", "No Team")
+                self._total_rounds = int(last_state.attributes.get("total_rounds", 0))
+            _LOGGER.debug("Restored highscore: %d", self._highscore_total)
+        except (ValueError, TypeError) as e:
+            _LOGGER.warning("Could not restore highscore: %s", e)
 
     @property
     def state(self) -> int:
