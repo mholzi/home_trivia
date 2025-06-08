@@ -1267,6 +1267,12 @@ class HomeTriviaCard extends HTMLElement {
           margin-bottom: 16px;
           color: var(--secondary-text-color, #64748b);
         }
+        .question-ready-text {
+          font-size: 1.1em;
+          color: var(--secondary-text-color, #64748b);
+          font-weight: 400;
+          line-height: 1.4;
+        }
         .answers-grid {
           display: grid;
           grid-template-columns: 1fr;
@@ -1866,7 +1872,7 @@ class HomeTriviaCard extends HTMLElement {
       return `
         <div class="question-section">
           <div class="question-ready-title">Ready for the next question?</div>
-          <div class="question-text">${this.t('clickNextQuestion')}</div>
+          <div class="question-ready-text">${this.t('clickNextQuestion')}</div>
         </div>
       `;
     }
