@@ -1350,61 +1350,60 @@ class HomeTriviaCard extends HTMLElement {
         }
         .teams-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 20px;
+          gap: 12px;
           margin-bottom: 32px;
         }
         .team-card {
-          border: none;
-          border-radius: 12px;
-          padding: 24px 20px;
-          text-align: center;
+          display: grid;
+          grid-template-columns: auto auto 1fr auto auto;
+          gap: 12px;
+          align-items: center;
           background: white;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+          padding: 12px 16px;
+          border-radius: 8px;
+          border: 1px solid #f1f5f9;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
           position: relative;
           overflow: hidden;
-          border: 1px solid #f1f5f9;
         }
         .team-card::before {
           content: '';
           position: absolute;
           top: 0;
           left: 0;
-          right: 0;
-          height: 4px;
+          bottom: 0;
+          width: 4px;
           background: #2563eb;
         }
         .team-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
           border-color: #e2e8f0;
+          background: rgba(248, 250, 252, 1.0);
         }
         .team-name {
           font-weight: 700;
-          margin-bottom: 12px;
           color: var(--primary-text-color);
           font-size: 1.1em;
         }
         .team-points {
-          font-size: 1.4em;
+          font-size: 1.1em;
           color: #2563eb;
-          margin-bottom: 16px;
           font-weight: 800;
         }
         /* Rank display */
         .team-rank {
-          font-size: 0.9em;
+          font-size: 1.1em;
           font-weight: 700;
           color: #64748b;
-          margin-bottom: 8px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          min-width: 40px;
+          text-align: center;
         }
         /* Medal icon */
         .team-medal {
-          font-size: 1.5em;
-          margin-bottom: 8px;
+          font-size: 1.3em;
         }
         /* Rank-specific styling */
         .rank-1::before {
@@ -1480,9 +1479,9 @@ class HomeTriviaCard extends HTMLElement {
         }
         /* Team answer status during timer */
         .team-answer-status {
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-size: 0.9em;
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 0.8em;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
@@ -1491,20 +1490,26 @@ class HomeTriviaCard extends HTMLElement {
         }
         /* Current answer display */
         .team-current-answer {
-          padding: 6px 12px;
-          border-radius: 16px;
-          font-size: 0.9em;
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 0.8em;
           font-weight: 600;
           background: #dbeafe;
           color: #1d4ed8;
-          margin-bottom: 12px;
+        }
+        /* Team status area for compact layout */
+        .team-status-area {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          align-items: flex-end;
+          min-width: 140px;
         }
         /* Badge container */
         .team-badges {
           display: flex;
-          gap: 8px;
-          justify-content: center;
-          margin-top: 8px;
+          gap: 6px;
+          justify-content: flex-end;
         }
         /* Individual badges */
         .team-answer-badge, .team-points-badge {
@@ -1743,11 +1748,15 @@ class HomeTriviaCard extends HTMLElement {
             font-size: 1em;
           }
           .teams-grid {
-            grid-template-columns: 1fr;
-            gap: 16px;
+            gap: 8px;
           }
           .team-card {
-            padding: 20px 16px;
+            padding: 10px 12px;
+            grid-template-columns: auto auto 1fr auto;
+            gap: 8px;
+          }
+          .team-status-area {
+            min-width: 100px;
           }
           .control-button {
             padding: 14px 24px;
@@ -1963,11 +1972,11 @@ class HomeTriviaCard extends HTMLElement {
       
       html += `
         <div class="${cardClasses}">
-
           <div class="team-rank">#${rank}</div>
-          ${medalIcon ? `<ha-icon icon="${medalIcon}" class="team-medal"></ha-icon>` : ''}
+          ${medalIcon ? `<ha-icon icon="${medalIcon}" class="team-medal"></ha-icon>` : '<div></div>'}
           <div class="team-name">${name}</div>
-          <div id="team-points-${team_number}" class="team-points">${points} points</div>
+          <div class="team-points">${points} pts</div>
+          <div class="team-status-area">
       `;
       
       if (isTimerRunning) {
@@ -1996,7 +2005,9 @@ class HomeTriviaCard extends HTMLElement {
         }
       }
       
-      html += `</div>`;
+      html += `
+          </div>
+        </div>`;
     });
     
     html += '</div>';
