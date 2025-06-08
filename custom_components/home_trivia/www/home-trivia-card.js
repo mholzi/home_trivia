@@ -244,13 +244,13 @@ class HomeTriviaCard extends HTMLElement {
         .splash-screen {
           text-align: center;
           padding: 32px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 75%, #f5576c 100%);
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
           border-radius: var(--ha-card-border-radius, 12px);
           color: white;
           position: relative;
           overflow: hidden;
           min-height: 500px;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
         }
         
         .splash-header {
@@ -265,12 +265,9 @@ class HomeTriviaCard extends HTMLElement {
           font-size: 3em;
           font-weight: 800;
           margin-bottom: 16px;
-          text-shadow: 2px 4px 8px rgba(0,0,0,0.3);
-          letter-spacing: 1.2px;
-          background: linear-gradient(45deg, #ffffff, #f0f0f0);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          letter-spacing: 1px;
+          color: white;
         }
         
         .splash-subtitle {
@@ -308,12 +305,12 @@ class HomeTriviaCard extends HTMLElement {
         }
         
         .splash-setup {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 16px;
           padding: 24px;
           margin: 20px 0;
-          backdrop-filter: blur(10px);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+          color: #1e293b;
         }
         
         .setup-message h2 {
@@ -328,22 +325,22 @@ class HomeTriviaCard extends HTMLElement {
         }
         
         .splash-input-section {
-          background: rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.95);
           border-radius: 16px;
           padding: 24px;
           margin-bottom: 20px;
           text-align: left;
           transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(20px);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+          color: #1e293b;
         }
         
         .splash-input-section:hover {
-          background: rgba(255, 255, 255, 0.18);
-          border-color: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 1.0);
+          border-color: rgba(37, 99, 235, 0.3);
           transform: translateY(-2px);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
         
         .splash-input-section.error {
@@ -361,17 +358,17 @@ class HomeTriviaCard extends HTMLElement {
           margin: 0 0 0 12px;
           font-size: 1.3em;
           font-weight: 700;
-          color: white;
+          color: #1e293b;
         }
         
         .input-icon {
           --mdc-icon-size: 24px;
-          color: rgba(255, 255, 255, 0.9);
+          color: #2563eb;
         }
         
         .input-description {
           margin: 0 0 16px 0;
-          opacity: 0.85;
+          color: #64748b;
           font-size: 0.95em;
           line-height: 1.4;
         }
@@ -392,8 +389,8 @@ class HomeTriviaCard extends HTMLElement {
         
         .form-select:focus, .splash-team-input:focus, .splash-team-select:focus {
           outline: none;
-          border-color: rgba(255, 255, 255, 0.6);
-          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), 0 4px 16px rgba(0, 0, 0, 0.08);
           background: rgba(255, 255, 255, 1.0);
           transform: translateY(-1px);
         }
@@ -408,21 +405,21 @@ class HomeTriviaCard extends HTMLElement {
           grid-template-columns: auto 1fr 1fr;
           gap: 12px;
           align-items: center;
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(248, 250, 252, 0.8);
           padding: 12px;
-          border-radius: 6px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
         }
         
         .splash-team-item:hover {
-          background: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.3);
+          background: rgba(248, 250, 252, 1.0);
+          border-color: #cbd5e1;
         }
         
         .team-label {
           font-weight: 600;
           white-space: nowrap;
-          color: white;
+          color: #1e293b;
         }
         
         .splash-start-button {
@@ -450,13 +447,14 @@ class HomeTriviaCard extends HTMLElement {
         }
         
         .splash-start-button.ready {
-          background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-          border-color: rgba(76, 175, 80, 1);
+          background: #059669;
+          border-color: #059669;
+          color: white;
         }
         
         .splash-start-button.ready:hover {
-          background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
-          box-shadow: 0 6px 25px rgba(76, 175, 80, 0.4);
+          background: #047857;
+          box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
         }
         
         .start-help {
@@ -466,12 +464,13 @@ class HomeTriviaCard extends HTMLElement {
         }
         
         .splash-qr-section {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 16px;
           padding: 20px;
           margin: 20px 0;
-          backdrop-filter: blur(10px);
           text-align: center;
+          color: #1e293b;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
         }
         
         .qr-header {
@@ -1157,7 +1156,7 @@ class HomeTriviaCard extends HTMLElement {
           overflow: hidden;
         }
         .game-header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #2563eb;
           color: white;
           padding: 32px 24px;
           text-align: center;
@@ -1170,11 +1169,8 @@ class HomeTriviaCard extends HTMLElement {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%), 
-                      linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%);
-          background-size: 20px 20px;
-          background-position: 0 0, 10px 10px;
-          opacity: 0.3;
+          background: rgba(255, 255, 255, 0.05);
+          opacity: 0.8;
         }
         .game-title {
           font-size: 2.2em;
@@ -1221,42 +1217,43 @@ class HomeTriviaCard extends HTMLElement {
         }
         .answer-button {
           padding: 20px 24px;
-          border: 2px solid rgba(102, 126, 234, 0.2);
-          border-radius: 16px;
-          background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.95) 100%);
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          background: white;
           cursor: pointer;
           font-size: 1.1em;
           font-weight: 600;
           transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
           text-align: left;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          color: #1e293b;
         }
         .answer-button:hover {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #2563eb;
           color: white;
-          border-color: #667eea;
+          border-color: #2563eb;
           transform: translateY(-2px);
-          box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
         }
         }
         .countdown-timer {
           text-align: center;
           font-size: 2em;
           font-weight: bold;
-          color: var(--primary-color);
+          color: #2563eb;
           margin-bottom: 20px;
           padding: 10px;
           border-radius: 8px;
           transition: all 0.3s ease;
         }
         .countdown-timer.time-up {
-          color: var(--error-color, #ff3333);
-          background-color: var(--error-background, rgba(255, 51, 51, 0.1));
+          color: #dc2626;
+          background-color: rgba(220, 38, 38, 0.1);
           animation: pulse-red 1s infinite;
         }
         .countdown-timer.warning {
-          color: var(--warning-color, #ff9800);
-          background-color: var(--warning-background, rgba(255, 152, 0, 0.1));
+          color: #f59e0b;
+          background-color: rgba(245, 158, 11, 0.1);
         }
         @keyframes pulse-red {
           0% { transform: scale(1); opacity: 1; }
@@ -1270,23 +1267,23 @@ class HomeTriviaCard extends HTMLElement {
         .countdown-progress-bar {
           width: 100%;
           height: 8px;
-          background-color: var(--divider-color, #e0e0e0);
+          background-color: #e2e8f0;
           border-radius: 4px;
           overflow: hidden;
           box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
         }
         .countdown-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, var(--success-color, #4caf50), var(--primary-color, #2196f3));
+          background: linear-gradient(90deg, #059669, #2563eb);
           border-radius: 4px;
           transition: width 0.8s ease-out;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
         .countdown-timer.warning + .countdown-progress-container .countdown-progress-fill {
-          background: linear-gradient(90deg, var(--warning-color, #ff9800), var(--error-color, #f44336));
+          background: linear-gradient(90deg, #f59e0b, #dc2626);
         }
         .countdown-timer.time-up + .countdown-progress-container .countdown-progress-fill {
-          background: var(--error-color, #f44336);
+          background: #dc2626;
           animation: progress-pulse 1s infinite;
         }
         @keyframes progress-pulse {
@@ -1302,14 +1299,15 @@ class HomeTriviaCard extends HTMLElement {
         }
         .team-card {
           border: none;
-          border-radius: 16px;
+          border-radius: 12px;
           padding: 24px 20px;
           text-align: center;
-          background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.95) 100%);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04);
+          background: white;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
           transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
           position: relative;
           overflow: hidden;
+          border: 1px solid #f1f5f9;
         }
         .team-card::before {
           content: '';
@@ -1318,11 +1316,12 @@ class HomeTriviaCard extends HTMLElement {
           left: 0;
           right: 0;
           height: 4px;
-          background: linear-gradient(90deg, #667eea, #764ba2);
+          background: #2563eb;
         }
         .team-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12), 0 4px 24px rgba(0, 0, 0, 0.08);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+          border-color: #e2e8f0;
         }
         .team-name {
           font-weight: 700;
@@ -1332,7 +1331,7 @@ class HomeTriviaCard extends HTMLElement {
         }
         .team-points {
           font-size: 1.4em;
-          color: #667eea;
+          color: #2563eb;
           margin-bottom: 16px;
           font-weight: 800;
         }
@@ -1345,11 +1344,11 @@ class HomeTriviaCard extends HTMLElement {
           letter-spacing: 0.5px;
         }
         .team-answered {
-          background: linear-gradient(135deg, #10b981, #059669);
+          background: #059669;
           color: white;
         }
         .team-not-answered {
-          background: linear-gradient(135deg, #f59e0b, #d97706);
+          background: #f59e0b;
           color: white;
         }
         .team-last-round {
@@ -1360,11 +1359,11 @@ class HomeTriviaCard extends HTMLElement {
           font-style: italic;
         }
         .team-correct {
-          background: var(--success-color, #4CAF50);
+          background: #059669;
           color: white;
         }
         .team-incorrect {
-          background: var(--error-color, #f44336);
+          background: #dc2626;
           color: white;
         }
         .game-controls {
@@ -1402,11 +1401,11 @@ class HomeTriviaCard extends HTMLElement {
           left: 100%;
         }
         .primary-button {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #2563eb;
           color: white;
         }
         .secondary-button {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          background: #dc2626;
           color: white;
         }
         .control-button:hover {
@@ -1418,12 +1417,12 @@ class HomeTriviaCard extends HTMLElement {
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
         .fun-fact {
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+          background: rgba(37, 99, 235, 0.05);
           padding: 20px;
-          border-radius: 16px;
+          border-radius: 12px;
           margin-top: 24px;
-          border-left: 4px solid #667eea;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+          border-left: 4px solid #2563eb;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
         .fun-fact-title {
           font-weight: 700;
@@ -1432,26 +1431,25 @@ class HomeTriviaCard extends HTMLElement {
           font-size: 1.1em;
         }
         .team-management-section {
-          border: none;
-          border-radius: 16px;
+          border: 1px solid #f1f5f9;
+          border-radius: 12px;
           margin-bottom: 24px;
           overflow: hidden;
-          background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(248,250,252,0.9) 100%);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
-          backdrop-filter: blur(10px);
+          background: white;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
         .section-header {
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+          background: #f8fafc;
           padding: 20px 24px;
           cursor: pointer;
           display: flex;
           justify-content: space-between;
           align-items: center;
           transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-          border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+          border-bottom: 1px solid #e2e8f0;
         }
         .section-header:hover {
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+          background: #f1f5f9;
           transform: translateY(-1px);
         }
         .section-header h3 {
@@ -1462,13 +1460,13 @@ class HomeTriviaCard extends HTMLElement {
         }
         .expand-icon {
           font-size: 1.3em;
-          color: #667eea;
+          color: #2563eb;
           transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
           font-weight: bold;
         }
         .team-management-content {
           padding: 24px;
-          background: rgba(255, 255, 255, 0.7);
+          background: white;
         }
         .team-count-section, .team-setup-section {
           margin-bottom: 20px;
@@ -1486,7 +1484,7 @@ class HomeTriviaCard extends HTMLElement {
         }
         .management-input-header .input-icon {
           --mdc-icon-size: 20px;
-          color: #667eea;
+          color: #2563eb;
         }
         .input-description {
           margin: 0 0 12px 0;
@@ -1507,8 +1505,8 @@ class HomeTriviaCard extends HTMLElement {
         }
         .form-select:focus, .main-team-input:focus, .main-team-select:focus {
           outline: none;
-          border-color: var(--primary-color);
-          box-shadow: 0 0 0 2px rgba(var(--rgb-primary-color), 0.2);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
         }
         .main-teams-container {
           display: grid;
