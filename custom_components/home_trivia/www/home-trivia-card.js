@@ -1358,6 +1358,73 @@ class HomeTriviaCard extends HTMLElement {
           background: #dc2626;
           color: white;
         }
+        /* New team card states */
+        .team-card-neutral {
+          background: #f8fafc;
+          border-color: #e2e8f0;
+        }
+        .team-card-neutral::before {
+          background: #94a3b8;
+        }
+        .team-card-answered-during-timer {
+          background: #f0fdf4;
+          border-color: #bbf7d0;
+        }
+        .team-card-answered-during-timer::before {
+          background: #22c55e;
+        }
+        .team-card-results {
+          background: white;
+          border-color: #f1f5f9;
+        }
+        .team-card-results::before {
+          background: #2563eb;
+        }
+        /* Team answer status during timer */
+        .team-answer-status {
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.9em;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          background: #e2e8f0;
+          color: #64748b;
+        }
+        /* Current answer display */
+        .team-current-answer {
+          padding: 6px 12px;
+          border-radius: 16px;
+          font-size: 0.9em;
+          font-weight: 600;
+          background: #dbeafe;
+          color: #1d4ed8;
+          margin-bottom: 12px;
+        }
+        /* Badge container */
+        .team-badges {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          margin-top: 8px;
+        }
+        /* Individual badges */
+        .team-answer-badge, .team-points-badge {
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 0.8em;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .badge-correct {
+          background: #059669;
+          color: white;
+        }
+        .badge-incorrect {
+          background: #dc2626;
+          color: white;
+        }
         .game-controls {
           display: flex;
           gap: 16px;
@@ -1743,20 +1810,48 @@ class HomeTriviaCard extends HTMLElement {
       const lastRoundCorrect = team.attributes.last_round_correct;
       const lastRoundPoints = team.attributes.last_round_points || 0;
 
+      // Determine card state classes
+      let cardClasses = 'team-card';
+      if (isTimerRunning) {
+        // When timer is running: neutral color, light green if answered
+        cardClasses += answered ? ' team-card-answered-during-timer' : ' team-card-neutral';
+      } else {
+        // When timer is not running: normal styling
+        cardClasses += ' team-card-results';
+      }
+
       html += `
-        <div class="team-card">
+        <div class="${cardClasses}">
           <div class="team-name">${team.state}</div>
-          <div class="team-points">${points} points</div>
-          <div class="team-answer ${answered ? 'team-answered' : 'team-not-answered'}">
-            ${answered ? (isTimerRunning ? this.t('answered') : `${this.t('answer')}: ${answer}`) : this.t('notAnswered')}
-          </div>`;
+          <div class="team-points">${points} points</div>`;
       
-      // Show last round results if available
-      if (lastRoundAnswer) {
+      if (isTimerRunning) {
+        // During timer: show answered status only
         html += `
-          <div class="team-last-round ${lastRoundCorrect ? 'team-correct' : 'team-incorrect'}">
-            ${this.t('last')}: ${lastRoundAnswer} (${lastRoundCorrect ? '✓' : '✗'}) +${lastRoundPoints}pts
+          <div class="team-answer-status">
+            ${answered ? this.t('answered') : this.t('notAnswered')}
           </div>`;
+      } else {
+        // When timer not running: show current answer if available
+        if (answered && answer) {
+          html += `
+            <div class="team-current-answer">
+              ${this.t('answer')}: ${answer}
+            </div>`;
+        }
+        
+        // Show last round results as badges if available
+        if (lastRoundAnswer) {
+          html += `
+            <div class="team-badges">
+              <div class="team-answer-badge ${lastRoundCorrect ? 'badge-correct' : 'badge-incorrect'}">
+                ${lastRoundAnswer}
+              </div>
+              <div class="team-points-badge ${lastRoundCorrect ? 'badge-correct' : 'badge-incorrect'}">
+                +${lastRoundPoints}pts
+              </div>
+            </div>`;
+        }
       }
       
       html += `</div>`;
