@@ -1144,7 +1144,7 @@ class HomeTriviaCard extends HTMLElement {
 
     if (isRunning && timeLeft <= 5 && timeLeft > 0) {
       containerClasses += ' warning-pulse';
-    } else if (timeLeft <= 0) {
+    } else if (countdown && timeLeft <= 0) {
       containerClasses += ' time-up-pulse';
     }
     
@@ -1262,6 +1262,22 @@ class HomeTriviaCard extends HTMLElement {
           0% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.05); opacity: 0.8; }
           100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse-orange-shadow {
+          0% { box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4), 0 2px 16px rgba(245, 158, 11, 0.2); }
+          50% { box-shadow: 0 12px 40px rgba(245, 158, 11, 0.6), 0 4px 20px rgba(245, 158, 11, 0.4); }
+          100% { box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4), 0 2px 16px rgba(245, 158, 11, 0.2); }
+        }
+        @keyframes pulse-red-shadow {
+          0% { box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4), 0 2px 16px rgba(220, 38, 38, 0.2); }
+          50% { box-shadow: 0 12px 40px rgba(220, 38, 38, 0.6), 0 4px 20px rgba(220, 38, 38, 0.4); }
+          100% { box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4), 0 2px 16px rgba(220, 38, 38, 0.2); }
+        }
+        .warning-pulse {
+          animation: pulse-orange-shadow 1.2s infinite;
+        }
+        .time-up-pulse {
+          animation: pulse-red-shadow 1.2s infinite;
         }
         .countdown-progress-container {
           margin: 10px auto 20px auto;
