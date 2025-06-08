@@ -1310,6 +1310,22 @@ class HomeTriviaCard extends HTMLElement {
           50% { opacity: 0.5; }
           100% { opacity: 1; }
         }
+        @keyframes pulse-orange-shadow {
+          0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(245, 158, 11, 0.8); }
+          50% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 20px rgba(245, 158, 11, 0.8); }
+          100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(245, 158, 11, 0.8); }
+        }
+        @keyframes pulse-red-shadow {
+          0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(220, 38, 38, 0.8); }
+          50% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 25px rgba(220, 38, 38, 0.8); }
+          100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(220, 38, 38, 0.8); }
+        }
+        .warning-pulse {
+          animation: pulse-orange-shadow 1.2s ease-in-out infinite;
+        }
+        .time-up-pulse {
+          animation: pulse-red-shadow 1.2s ease-in-out infinite;
+        }
         .teams-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
