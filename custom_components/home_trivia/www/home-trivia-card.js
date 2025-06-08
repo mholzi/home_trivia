@@ -1136,6 +1136,17 @@ class HomeTriviaCard extends HTMLElement {
     const gameStatus = this._hass.states['sensor.home_trivia_game_status'];
     const currentQuestion = this._hass.states['sensor.home_trivia_current_question'];
     const countdown = this._hass.states['sensor.home_trivia_countdown_current'];
+
+    // Determine container classes based on countdown state
+    let containerClasses = 'game-container';
+    const timeLeft = countdown ? parseInt(countdown.state, 10) : 0;
+    const isRunning = countdown?.attributes.is_running;
+
+    if (isRunning && timeLeft <= 5 && timeLeft > 0) {
+      containerClasses += ' warning-pulse';
+    } else if (timeLeft <= 0) {
+      containerClasses += ' time-up-pulse';
+    }
     
     this.shadowRoot.innerHTML = `
       <style>
@@ -1282,6 +1293,22 @@ class HomeTriviaCard extends HTMLElement {
           0% { opacity: 1; }
           50% { opacity: 0.5; }
           100% { opacity: 1; }
+        }
+        @keyframes pulse-orange-shadow {
+          0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(245, 158, 11, 0.8); }
+          50% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 20px rgba(245, 158, 11, 0.8); }
+          100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(245, 158, 11, 0.8); }
+        }
+        @keyframes pulse-red-shadow {
+          0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(220, 38, 38, 0.8); }
+          50% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 25px rgba(220, 38, 38, 0.8); }
+          100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(220, 38, 38, 0.8); }
+        }
+        .warning-pulse {
+          animation: pulse-orange-shadow 1.2s ease-in-out infinite;
+        }
+        .time-up-pulse {
+          animation: pulse-red-shadow 1.2s ease-in-out infinite;
         }
         .teams-grid {
           display: grid;
@@ -1648,7 +1675,7 @@ class HomeTriviaCard extends HTMLElement {
         }
       </style>
       
-      <div class="game-container">
+      <div class="${containerClasses}">
         <div class="game-header">
           <div class="game-title">${this.t('gameTitle')}</div>
           <div class="game-status">${gameStatus ? gameStatus.state : this.t('loading_')}</div>
