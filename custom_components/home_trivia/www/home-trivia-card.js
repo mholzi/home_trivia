@@ -1240,20 +1240,20 @@ class HomeTriviaCard extends HTMLElement {
           text-align: center;
           font-size: 2em;
           font-weight: bold;
-          color: var(--primary-color);
+          color: #2563eb;
           margin-bottom: 20px;
           padding: 10px;
           border-radius: 8px;
           transition: all 0.3s ease;
         }
         .countdown-timer.time-up {
-          color: var(--error-color, #ff3333);
-          background-color: var(--error-background, rgba(255, 51, 51, 0.1));
+          color: #dc2626;
+          background-color: rgba(220, 38, 38, 0.1);
           animation: pulse-red 1s infinite;
         }
         .countdown-timer.warning {
-          color: var(--warning-color, #ff9800);
-          background-color: var(--warning-background, rgba(255, 152, 0, 0.1));
+          color: #f59e0b;
+          background-color: rgba(245, 158, 11, 0.1);
         }
         @keyframes pulse-red {
           0% { transform: scale(1); opacity: 1; }
@@ -1267,7 +1267,7 @@ class HomeTriviaCard extends HTMLElement {
         .countdown-progress-bar {
           width: 100%;
           height: 8px;
-          background-color: var(--divider-color, #e0e0e0);
+          background-color: #e2e8f0;
           border-radius: 4px;
           overflow: hidden;
           box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
