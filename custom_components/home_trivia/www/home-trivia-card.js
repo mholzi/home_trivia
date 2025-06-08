@@ -1144,7 +1144,7 @@ class HomeTriviaCard extends HTMLElement {
 
     if (isRunning && timeLeft <= 5 && timeLeft > 0) {
       containerClasses += ' warning-pulse';
-    } else if (timeLeft <= 0) {
+    } else if (countdown && timeLeft <= 0) {
       containerClasses += ' time-up-pulse';
     }
     
