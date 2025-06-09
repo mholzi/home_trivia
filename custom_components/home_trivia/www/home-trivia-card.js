@@ -1475,8 +1475,11 @@ class HomeTriviaCard extends HTMLElement {
         }
         .teams-grid {
           display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 12px;
           margin-bottom: 32px;
+          overflow-x: auto;
+          padding-bottom: 8px;
         }
         .team-card {
           display: grid;
@@ -1874,6 +1877,7 @@ class HomeTriviaCard extends HTMLElement {
             font-size: 1em;
           }
           .teams-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 8px;
           }
           .team-card {
@@ -1900,6 +1904,20 @@ class HomeTriviaCard extends HTMLElement {
           }
           .team-management-content {
             padding: 20px 16px;
+          }
+        }
+        
+        /* Extra small screens - horizontal scroll for teams */
+        @media (max-width: 320px) {
+          .teams-grid {
+            grid-template-columns: repeat(auto-fill, 240px);
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding-right: 16px;
+          }
+          .team-card {
+            scroll-snap-align: start;
+            min-width: 240px;
           }
         }
       </style>
