@@ -1508,7 +1508,7 @@ class HomeTriviaCard extends HTMLElement {
         }
         .team-name {
           font-weight: 700;
-          color: var(--primary-text-color);
+          color: var(--primary-text-color, #1e293b);
           font-size: 1.1em;
         }
         .team-points {
@@ -1611,7 +1611,7 @@ class HomeTriviaCard extends HTMLElement {
           text-transform: uppercase;
           letter-spacing: 0.5px;
           background: #e2e8f0;
-          color: #64748b;
+          color: #475569;
         }
         /* Current answer display */
         .team-current-answer {
@@ -1777,7 +1777,7 @@ class HomeTriviaCard extends HTMLElement {
           margin: 0 0 12px 0;
           opacity: 0.7;
           font-size: 0.9em;
-          color: var(--secondary-text-color);
+          color: var(--secondary-text-color, #64748b);
         }
         .form-select, .main-team-input, .main-team-select {
           width: 100%;
@@ -1785,7 +1785,7 @@ class HomeTriviaCard extends HTMLElement {
           border: 1px solid var(--divider-color);
           border-radius: 6px;
           background: var(--card-background-color, white);
-          color: var(--primary-text-color);
+          color: var(--primary-text-color, #1e293b);
           font-size: 14px;
           box-sizing: border-box;
           transition: all 0.2s ease;
@@ -1815,7 +1815,7 @@ class HomeTriviaCard extends HTMLElement {
         .main-team-item .team-label {
           font-weight: 600;
           white-space: nowrap;
-          color: var(--primary-text-color);
+          color: var(--primary-text-color, #1e293b);
         }
         
         /* Points Animation Styles */
@@ -2059,9 +2059,13 @@ class HomeTriviaCard extends HTMLElement {
     const countdown = this._hass.states['sensor.home_trivia_countdown_current'];
     const isTimerRunning = countdown && countdown.attributes && countdown.attributes.is_running;
     
+    // Get current team count setting to ensure we don't show extra teams
+    const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
+    const currentTeamCount = gameStatus?.attributes?.team_count || 2;
+    
     // Get all participating teams and their data
     const allTeams = [];
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= Math.min(5, currentTeamCount); i++) {
       const team = this._hass.states[`sensor.home_trivia_team_${i}`];
       if (team && team.attributes.participating) {
         allTeams.push({
