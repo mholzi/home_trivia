@@ -100,6 +100,8 @@ class HomeTriviaGameStatusSensor(HomeTriviaBaseSensor):
         self._team_count = 2
         self._difficulty_level = "Easy"
         self._timer_length = 30
+        self._game_summary = {}  # Hold final game results
+        self._user_stats = {}  # Track stats per user_id for MVP
 
     async def _restore_state(self, last_state) -> None:
         """Restore state from last known state."""
@@ -113,6 +115,8 @@ class HomeTriviaGameStatusSensor(HomeTriviaBaseSensor):
                 self._team_count = int(last_state.attributes.get("team_count", 2))
                 self._difficulty_level = last_state.attributes.get("difficulty_level", "Easy")
                 self._timer_length = int(last_state.attributes.get("timer_length", 30))
+                self._game_summary = last_state.attributes.get("game_summary", {})
+                self._user_stats = last_state.attributes.get("user_stats", {})
                 
                 _LOGGER.info("Restored game settings - Team Count: %d, Difficulty: %s, Timer: %d", 
                            self._team_count, self._difficulty_level, self._timer_length)
@@ -134,6 +138,8 @@ class HomeTriviaGameStatusSensor(HomeTriviaBaseSensor):
             "team_count": self._team_count,
             "difficulty_level": self._difficulty_level,
             "timer_length": self._timer_length,
+            "game_summary": self._game_summary,
+            "user_stats": self._user_stats,
         }
 
     def set_state(self, new_state: str) -> None:
@@ -154,6 +160,24 @@ class HomeTriviaGameStatusSensor(HomeTriviaBaseSensor):
     def set_timer_length(self, timer_length: int) -> None:
         """Set the timer length."""
         self._timer_length = timer_length
+        self.async_write_ha_state()
+
+    def set_game_summary(self, summary: dict) -> None:
+        """Set the game summary."""
+        self._game_summary = summary
+        self.async_write_ha_state()
+
+    def update_user_correct_answer(self, user_id: str) -> None:
+        """Update user stats for MVP calculation."""
+        if user_id not in self._user_stats:
+            self._user_stats[user_id] = {"correct_answers": 0}
+        self._user_stats[user_id]["correct_answers"] += 1
+        self.async_write_ha_state()
+
+    def reset_game_stats(self) -> None:
+        """Reset game summary and user stats."""
+        self._game_summary = {}
+        self._user_stats = {}
         self.async_write_ha_state()
 
     async def async_update(self) -> None:
@@ -179,6 +203,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
         self._last_round_correct = False
         self._last_round_points = 0
         self._user_id = None
+        self._category_stats = {}  # Track performance per category
 
     async def _restore_state(self, last_state) -> None:
         """Restore state from last known state."""
@@ -197,6 +222,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
                 self._last_round_correct = bool(last_state.attributes.get("last_round_correct", False))
                 self._last_round_points = int(last_state.attributes.get("last_round_points", 0))
                 self._user_id = last_state.attributes.get("user_id")
+                self._category_stats = last_state.attributes.get("category_stats", {})
                 
                 _LOGGER.debug("Restored team %d attributes", self._team_number)
                 
@@ -222,6 +248,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
             "last_round_correct": self._last_round_correct,
             "last_round_points": self._last_round_points,
             "user_id": self._user_id,
+            "category_stats": self._category_stats,
         }
 
     def update_team_name(self, name: str) -> None:
@@ -265,6 +292,16 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
         self._last_round_answer = answer
         self._last_round_correct = correct
         self._last_round_points = points
+        self.async_write_ha_state()
+
+    def update_category_stats(self, category: str, is_correct: bool) -> None:
+        """Update the stats for a given category."""
+        if category not in self._category_stats:
+            self._category_stats[category] = {"correct": 0, "total": 0}
+
+        if is_correct:
+            self._category_stats[category]["correct"] += 1
+        self._category_stats[category]["total"] += 1
         self.async_write_ha_state()
 
     async def async_update(self) -> None:
