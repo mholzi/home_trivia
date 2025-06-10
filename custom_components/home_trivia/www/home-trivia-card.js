@@ -256,7 +256,7 @@ class HomeTriviaCard extends HTMLElement {
         
         // For teams, check points, names, participating status
         if (sensor.includes('team_')) {
-          const keyAttrs = ['points', 'participating', 'last_round_points'];
+          const keyAttrs = ['points', 'participating', 'last_round_points', 'correct_answer_streak'];
           for (const attr of keyAttrs) {
             if (prevAttrs[attr] !== currentAttrs[attr]) return true;
           }
@@ -1690,6 +1690,37 @@ class HomeTriviaCard extends HTMLElement {
         .team-card-results::before {
           background: #2563eb;
         }
+        
+        /* Streak indicator */
+        .streak-indicator {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: #fb923c;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 0.9em;
+          font-weight: 700;
+          margin-left: 8px;
+          animation: streak-pop-in 0.3s ease-out;
+        }
+
+        .streak-indicator ha-icon {
+          --mdc-icon-size: 16px;
+          animation: fire-flicker 1.5s infinite;
+        }
+
+        @keyframes streak-pop-in {
+          from { transform: scale(0.5); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fire-flicker {
+          0%, 100% { color: #f97316; }
+          50% { color: #fef3c7; }
+        }
+        
         /* Team answer status during timer */
         .team-answer-status {
           padding: 4px 8px;
@@ -2193,7 +2224,8 @@ class HomeTriviaCard extends HTMLElement {
           answer: team.attributes.answer,
           last_round_answer: team.attributes.last_round_answer,
           last_round_correct: team.attributes.last_round_correct,
-          last_round_points: team.attributes.last_round_points || 0
+          last_round_points: team.attributes.last_round_points || 0,
+          correct_answer_streak: team.attributes.correct_answer_streak || 0
         });
       }
     }
@@ -2207,7 +2239,7 @@ class HomeTriviaCard extends HTMLElement {
 
     // Render the leader card
     if (leader) {
-      const { team_number, name, points, answered, answer, last_round_answer, last_round_correct, last_round_points } = leader;
+      const { team_number, name, points, answered, answer, last_round_answer, last_round_correct, last_round_points, correct_answer_streak } = leader;
       
       let cardClasses = 'team-card leader-card rank-1 team-' + team_number;
       if (isTimerRunning) {
@@ -2222,6 +2254,12 @@ class HomeTriviaCard extends HTMLElement {
           <div class="team-rank">#1</div>
           <ha-icon icon="mdi:medal-outline" class="team-medal"></ha-icon>
           <div class="team-name">${name}</div>
+          ${correct_answer_streak > 1 ? `
+            <div class="streak-indicator">
+              <ha-icon icon="mdi:fire"></ha-icon>
+              <span>${correct_answer_streak}x</span>
+            </div>
+          ` : ''}
           <div class="team-points" id="team-points-${team_number}">${points} pts</div>
           <div class="team-status-area">
       `;
@@ -2262,7 +2300,7 @@ class HomeTriviaCard extends HTMLElement {
     html += '<div class="other-teams-grid">';
     otherTeams.forEach((team, index) => {
       const rank = index + 2; // Rank starts from 2 for this list
-      const { team_number, name, points, answered, answer, last_round_answer, last_round_correct, last_round_points } = team;
+      const { team_number, name, points, answered, answer, last_round_answer, last_round_correct, last_round_points, correct_answer_streak } = team;
       
       // Calculate score percentage relative to leader for progress bar
       const maxScore = leader ? leader.points : 1;
@@ -2289,6 +2327,12 @@ class HomeTriviaCard extends HTMLElement {
             <div class="team-rank">#${rank}</div>
             ${medalIcon ? `<ha-icon icon="${medalIcon}" class="team-medal"></ha-icon>` : '<div></div>'}
             <div class="team-name">${name}</div>
+            ${correct_answer_streak > 1 ? `
+              <div class="streak-indicator">
+                <ha-icon icon="mdi:fire"></ha-icon>
+                <span>${correct_answer_streak}x</span>
+              </div>
+            ` : ''}
           </div>
           <div class="team-score-section">
             <div class="team-points" id="team-points-${team_number}">${points} pts</div>
