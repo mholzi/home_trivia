@@ -155,10 +155,23 @@ async def _process_round_scoring(entities: dict) -> None:
         if team_answer and team_answer.upper() == correct_answer.upper():
             is_correct = True
             points_earned = 10 + remaining_time  # 10 base points + speed bonus
+            
+            # Streak bonus logic
+            if hasattr(team_sensor, 'increment_streak'):
+                new_streak = team_sensor.increment_streak()
+                # Check if the streak is a multiple of 3 (and not zero)
+                if new_streak > 0 and new_streak % 3 == 0:
+                    streak_bonus = 25
+                    points_earned += streak_bonus
+                    _LOGGER.info("Team %d hit a %dx streak! Awarding %d bonus points.", i, new_streak, streak_bonus)
+            
             _LOGGER.info("Team %d answered correctly! Earned %d points (10 base + %d speed bonus)", 
                         i, points_earned, remaining_time)
         else:
             _LOGGER.info("Team %d answered incorrectly or didn't answer (answer: %s)", i, team_answer)
+            # Reset streak on incorrect answer
+            if hasattr(team_sensor, 'reset_streak'):
+                team_sensor.reset_streak()
         
         # Update team with round results
         if hasattr(team_sensor, 'add_points') and points_earned > 0:
@@ -622,6 +635,8 @@ class GameManager:
                     team_sensor.async_write_ha_state()
                 if hasattr(team_sensor, 'update_team_user_id'):
                     team_sensor.update_team_user_id(None)
+                if hasattr(team_sensor, 'reset_streak'):
+                    team_sensor.reset_streak()
         
         # Disable any teams beyond the current team count
         for i in range(team_count + 1, 6):
@@ -646,6 +661,8 @@ class GameManager:
                 if hasattr(team_sensor, '_last_round_answer'):
                     team_sensor._last_round_answer = None
                     team_sensor.async_write_ha_state()
+                if hasattr(team_sensor, 'reset_streak'):
+                    team_sensor.reset_streak()
     
     async def _reset_team_answers(self, entities: dict):
         """Reset team answers for the next question."""

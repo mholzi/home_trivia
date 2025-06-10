@@ -179,6 +179,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
         self._last_round_correct = False
         self._last_round_points = 0
         self._user_id = None
+        self._correct_answer_streak = 0
 
     async def _restore_state(self, last_state) -> None:
         """Restore state from last known state."""
@@ -197,6 +198,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
                 self._last_round_correct = bool(last_state.attributes.get("last_round_correct", False))
                 self._last_round_points = int(last_state.attributes.get("last_round_points", 0))
                 self._user_id = last_state.attributes.get("user_id")
+                self._correct_answer_streak = int(last_state.attributes.get("correct_answer_streak", 0))
                 
                 _LOGGER.debug("Restored team %d attributes", self._team_number)
                 
@@ -222,6 +224,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
             "last_round_correct": self._last_round_correct,
             "last_round_points": self._last_round_points,
             "user_id": self._user_id,
+            "correct_answer_streak": self._correct_answer_streak,
         }
 
     def update_team_name(self, name: str) -> None:
@@ -270,6 +273,17 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
     async def async_update(self) -> None:
         """Update the sensor."""
         _LOGGER.debug("Updating team %d sensor", self._team_number)
+
+    def increment_streak(self) -> int:
+        """Increment the team's correct answer streak and return the new value."""
+        self._correct_answer_streak += 1
+        self.async_write_ha_state()
+        return self._correct_answer_streak
+
+    def reset_streak(self) -> None:
+        """Reset the team's correct answer streak to zero."""
+        self._correct_answer_streak = 0
+        self.async_write_ha_state()
 
 
 class HomeTriviaCountdownTimerSensor(HomeTriviaBaseSensor):
