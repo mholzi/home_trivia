@@ -351,7 +351,11 @@ class HomeTriviaCard extends HTMLElement {
       this.loadHomeAssistantUsers();
     }
 
-    if (this.shouldShowSplashScreen()) {
+    // Check for game stopped state first to show summary screen
+    const gameStatus = this._hass.states['sensor.home_trivia_game_status'];
+    if (gameStatus && gameStatus.state === 'stopped') {
+      this.renderSummaryScreen();
+    } else if (this.shouldShowSplashScreen()) {
       this.renderSplashScreen();
     } else {
       this.renderMainGame();
@@ -2110,6 +2114,244 @@ class HomeTriviaCard extends HTMLElement {
         });
       }
     }, 0);
+  }
+
+  renderSummaryScreen() {
+    const gameStatus = this._hass.states['sensor.home_trivia_game_status'];
+    const summary = gameStatus?.attributes?.game_summary || {};
+    const teams = this.getTeams();
+
+    // Convert teams object to array and sort by points
+    const sortedTeams = Object.values(teams)
+      .filter(team => team.participating)
+      .map(team => ({
+        ...team,
+        team_number: Object.keys(teams).find(key => teams[key] === team)?.split('_')[1]
+      }))
+      .sort((a, b) => b.points - a.points);
+
+    const winner = sortedTeams.length > 0 ? sortedTeams[0] : null;
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        .summary-container {
+          text-align: center;
+          padding: 32px;
+          background: linear-gradient(135deg, #059669 0%, #047857 100%);
+          border-radius: var(--ha-card-border-radius, 12px);
+          color: white;
+          min-height: 500px;
+          box-shadow: 0 10px 25px rgba(5, 150, 105, 0.15);
+        }
+
+        .summary-header {
+          margin-bottom: 24px;
+        }
+
+        .summary-header h1 {
+          font-size: 2.5rem;
+          margin: 0;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .summary-header p {
+          font-size: 1.2rem;
+          margin: 8px 0;
+          opacity: 0.9;
+        }
+
+        .winner-section {
+          background: rgba(255,255,255,0.1);
+          border-radius: 16px;
+          padding: 24px;
+          margin: 20px 0;
+          backdrop-filter: blur(10px);
+        }
+
+        .winner-trophy {
+          font-size: 4rem;
+          color: #fbbf24;
+          margin-bottom: 16px;
+          filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+          animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-10px); }
+          60% { transform: translateY(-5px); }
+        }
+
+        .winner-section h2 {
+          font-size: 1.8rem;
+          margin: 0 0 8px 0;
+          color: #fbbf24;
+        }
+
+        .winner-name {
+          font-size: 2.2rem;
+          font-weight: bold;
+          margin: 8px 0;
+        }
+
+        .winner-points {
+          font-size: 1.5rem;
+          color: #fbbf24;
+          font-weight: bold;
+        }
+
+        .mvp-section {
+          background: rgba(255,255,255,0.08);
+          border-radius: 12px;
+          padding: 20px;
+          margin: 20px 0;
+        }
+
+        .mvp-section h3 {
+          font-size: 1.4rem;
+          margin: 0 0 12px 0;
+          color: #fbbf24;
+        }
+
+        .mvp-name {
+          font-size: 1.3rem;
+          font-weight: bold;
+          margin: 8px 0;
+        }
+
+        .mvp-stat {
+          font-size: 1rem;
+          opacity: 0.9;
+        }
+
+        .final-rankings {
+          background: rgba(255,255,255,0.05);
+          border-radius: 12px;
+          padding: 20px;
+          margin: 20px 0;
+          text-align: left;
+        }
+
+        .final-rankings h3 {
+          text-align: center;
+          font-size: 1.4rem;
+          margin: 0 0 16px 0;
+          color: #fbbf24;
+        }
+
+        .ranking-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          margin: 8px 0;
+          background: rgba(255,255,255,0.1);
+          border-radius: 8px;
+          backdrop-filter: blur(5px);
+        }
+
+        .ranking-item .rank {
+          font-size: 1.2rem;
+          font-weight: bold;
+          width: 40px;
+          color: #fbbf24;
+        }
+
+        .ranking-item .name {
+          font-size: 1.1rem;
+          font-weight: bold;
+          flex-grow: 1;
+          margin-left: 12px;
+        }
+
+        .ranking-item .stat {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          margin: 0 12px;
+        }
+
+        .ranking-item .points {
+          font-size: 1rem;
+          font-weight: bold;
+          color: #fbbf24;
+          min-width: 60px;
+          text-align: right;
+        }
+
+        .control-button {
+          background: #2563eb;
+          color: white;
+          border: none;
+          padding: 16px 32px;
+          border-radius: 12px;
+          font-size: 1.1rem;
+          font-weight: bold;
+          cursor: pointer;
+          margin-top: 24px;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .control-button:hover {
+          background: #1d4ed8;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        }
+
+        .control-button:active {
+          transform: translateY(0);
+        }
+      </style>
+      <div class="summary-container">
+        <div class="summary-header">
+          <h1>🎉 Game Over!</h1>
+          <p>Final Results</p>
+        </div>
+
+        ${winner ? `
+        <div class="winner-section">
+          <div class="winner-trophy">🏆</div>
+          <h2>WINNER</h2>
+          <div class="winner-name">${this.escapeHtml(winner.name)}</div>
+          <div class="winner-points">${winner.points} PTS</div>
+        </div>
+        ` : ''}
+
+        ${summary.mvp && summary.mvp.name !== 'N/A' ? `
+        <div class="mvp-section">
+          <h3>⭐ Most Valuable Player</h3>
+          <div class="mvp-name">${this.escapeHtml(summary.mvp.name)}</div>
+          <div class="mvp-stat">${summary.mvp.score} Correct Answers</div>
+        </div>
+        ` : ''}
+
+        <div class="final-rankings">
+          <h3>📊 Final Rankings</h3>
+          ${sortedTeams.map((team, index) => {
+            const teamSummary = summary.team_stats?.[`home_trivia_team_${team.team_number}`] || {};
+            return `
+            <div class="ranking-item">
+              <span class="rank">#${index + 1}</span>
+              <span class="name">${this.escapeHtml(team.name)}</span>
+              <span class="stat">Best Category: <strong>${teamSummary.best_category || 'N/A'}</strong></span>
+              <span class="points">${team.points} pts</span>
+            </div>
+            `;
+          }).join('')}
+        </div>
+
+        <button class="control-button" onclick="this.getRootNode().host.startNewGame()">
+          🚀 Start New Game
+        </button>
+      </div>
+    `;
+  }
+
+  startNewGame() {
+    // Reset to splash screen by calling reset game service
+    if (this._hass) {
+      this._hass.callService('home_trivia', 'reset_game', {});
+    }
   }
 
   renderQuestionSection(currentQuestion, countdown) {
