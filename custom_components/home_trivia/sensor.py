@@ -354,7 +354,7 @@ class HomeTriviaCountdownCurrentSensor(SensorEntity):
                 _LOGGER.info("Countdown timer reached zero")
                 
                 # Trigger round scoring when timer expires
-                await self._trigger_round_scoring_on_timeout()
+                # await self._trigger_round_scoring_on_timeout()  # Commented out to fix speed bonus calculation
         except asyncio.CancelledError:
             _LOGGER.debug("Countdown timer task was cancelled")
         except Exception as e:
