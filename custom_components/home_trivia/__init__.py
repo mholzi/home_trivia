@@ -107,6 +107,7 @@ async def _process_round_scoring(entities: dict) -> None:
         return
     
     correct_answer = current_question.get("correct_answer")
+    category = current_question.get("category")
     if not correct_answer:
         _LOGGER.warning("No correct answer found for current question, skipping scoring")
         return
@@ -157,8 +158,17 @@ async def _process_round_scoring(entities: dict) -> None:
             points_earned = 10 + remaining_time  # 10 base points + speed bonus
             _LOGGER.info("Team %d answered correctly! Earned %d points (10 base + %d speed bonus)", 
                         i, points_earned, remaining_time)
+            
+            # Update user stats for MVP calculation
+            user_id = getattr(team_sensor, '_user_id', None)
+            if user_id and main_sensor and hasattr(main_sensor, 'update_user_correct_answer'):
+                main_sensor.update_user_correct_answer(user_id)
         else:
             _LOGGER.info("Team %d answered incorrectly or didn't answer (answer: %s)", i, team_answer)
+        
+        # Update category stats for each team
+        if category and hasattr(team_sensor, 'update_category_stats'):
+            team_sensor.update_category_stats(category, is_correct)
         
         # Update team with round results
         if hasattr(team_sensor, 'add_points') and points_earned > 0:
@@ -492,8 +502,12 @@ class GameManager:
         _LOGGER.info("Starting Home Trivia game")
         entities = self._get_entities()
         
-        # Set game status to playing
+        # Reset game stats at the start of each game
         main_sensor = entities.get("main_sensor")
+        if main_sensor and hasattr(main_sensor, 'reset_game_stats'):
+            main_sensor.reset_game_stats()
+        
+        # Set game status to playing
         if main_sensor and hasattr(main_sensor, 'set_state'):
             main_sensor.set_state("playing")
         else:
@@ -518,6 +532,9 @@ class GameManager:
         countdown_current_sensor = entities.get("countdown_current_sensor")
         if countdown_current_sensor and hasattr(countdown_current_sensor, 'stop_countdown'):
             countdown_current_sensor.stop_countdown()
+        
+        # Calculate and set summary before stopping
+        await self._calculate_and_set_summary(entities)
         
         main_sensor = entities.get("main_sensor")
         if main_sensor and hasattr(main_sensor, 'set_state'):
@@ -774,6 +791,54 @@ class GameManager:
             else:
                 # Final fallback: just set the state (countdown won't auto-decrement)
                 self.hass.states.async_set("sensor.home_trivia_countdown_current", timer_length)
+
+    async def _calculate_and_set_summary(self, entities: dict):
+        """Calculate final game stats and store them."""
+        main_sensor = entities.get("main_sensor")
+        team_sensors = entities.get("team_sensors", {})
+        
+        # Calculate Best Category for each team
+        team_stats = {}
+        for team_id, team_sensor in team_sensors.items():
+            if not getattr(team_sensor, '_participating', False):
+                continue
+            
+            best_category = "N/A"
+            best_rate = -1
+            category_stats = getattr(team_sensor, '_category_stats', {})
+            for cat, stats in category_stats.items():
+                if stats['total'] > 0:
+                    rate = stats['correct'] / stats['total']
+                    if rate > best_rate:
+                        best_rate = rate
+                        best_category = cat
+            team_stats[team_id] = {"best_category": best_category}
+
+        # Calculate MVP
+        mvp_data = {"name": "N/A", "score": 0}
+        user_stats = getattr(main_sensor, '_user_stats', {})
+        if user_stats:
+            # Find user_id with the most correct answers
+            mvp_user_id = max(user_stats, key=lambda u: user_stats[u]['correct_answers'])
+            mvp_score = user_stats[mvp_user_id]['correct_answers']
+            
+            # Find the HA user's name from their ID (requires hass object)
+            try:
+                user_info = await self.hass.auth.async_get_user(mvp_user_id)
+                mvp_name = user_info.name if user_info else mvp_user_id
+                mvp_data = {"name": mvp_name, "score": mvp_score}
+            except Exception as e:
+                _LOGGER.warning("Could not get user info for MVP: %s", e)
+                mvp_data = {"name": mvp_user_id, "score": mvp_score}
+            
+        # Assemble and set summary
+        summary = {
+            "team_stats": team_stats,
+            "mvp": mvp_data,
+        }
+        if main_sensor and hasattr(main_sensor, 'set_game_summary'):
+            main_sensor.set_game_summary(summary)
+            _LOGGER.info("Game summary calculated and set")
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
