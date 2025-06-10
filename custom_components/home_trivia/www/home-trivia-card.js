@@ -156,6 +156,15 @@ class HomeTriviaCard extends HTMLElement {
           // (check against total points to avoid re-triggering on simple refresh)
           if (points > 0 && points !== prevPoints && teamState.attributes.points !== prevTeamState.attributes.points) {
             this.triggerPointsAnimation(i, points);
+            
+            // Also trigger the card flash animation
+            setTimeout(() => {
+              const teamCard = this.shadowRoot.querySelector(`.team-${i}`);
+              if (teamCard) {
+                teamCard.classList.add('score-updated');
+                setTimeout(() => teamCard.classList.remove('score-updated'), 1000);
+              }
+            }, 200); // Small delay to ensure DOM is updated
           }
         }
       }
@@ -1473,6 +1482,20 @@ class HomeTriviaCard extends HTMLElement {
         .time-up-pulse {
           animation: pulse-red-shadow 1.2s ease-in-out infinite;
         }
+        @keyframes score-update-flash {
+          0% { background-color: #dbeafe; }
+          100% { background-color: transparent; }
+        }
+        .score-updated {
+          animation: score-update-flash 1s ease-out;
+        }
+        @keyframes count-up {
+          from { transform: translateY(5px); opacity: 0.5; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .team-points {
+          animation: count-up 0.3s ease-in-out;
+        }
         .teams-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1480,6 +1503,62 @@ class HomeTriviaCard extends HTMLElement {
           margin-bottom: 32px;
           overflow-x: auto;
           padding-bottom: 8px;
+        }
+        .leaderboard-container {
+          padding: 16px 0;
+        }
+        .leader-card {
+          border: 2px solid #ffd700 !important; /* Gold border */
+          background: linear-gradient(145deg, #fffbeb, #fdf2d1) !important;
+          transform: scale(1.05);
+          margin-bottom: 24px;
+          box-shadow: 0 8px 30px rgba(255, 215, 0, 0.3) !important;
+          position: relative;
+        }
+        .leader-crown {
+          position: absolute;
+          top: -15px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 2em;
+          color: #ffd700;
+          filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+        }
+        .other-teams-grid {
+          display: grid;
+          gap: 12px;
+        }
+        .team-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .team-score-section {
+          flex: 1;
+          padding-top: 8px;
+        }
+        .score-progress-bar {
+          width: 100%;
+          height: 8px;
+          background-color: #e2e8f0;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-top: 4px;
+        }
+        .score-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #60a5fa, #2563eb);
+          border-radius: 4px;
+          transition: width 0.5s ease-in-out;
+        }
+        .rank-1 .score-progress-fill { 
+          background: linear-gradient(90deg, #fde047, #f59e0b); 
+        }
+        .rank-2 .score-progress-fill { 
+          background: linear-gradient(90deg, #d1d5db, #9ca3af); 
+        }
+        .rank-3 .score-progress-fill { 
+          background: linear-gradient(90deg, #fcd34d, #d97706); 
         }
         .team-card {
           display: grid;
@@ -1494,6 +1573,12 @@ class HomeTriviaCard extends HTMLElement {
           transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
           position: relative;
           overflow: hidden;
+        }
+        .other-teams-grid .team-card {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          gap: 12px;
+          align-items: start;
         }
         .team-card::before {
           content: '';
@@ -1885,6 +1970,18 @@ class HomeTriviaCard extends HTMLElement {
             grid-template-columns: auto auto 1fr auto;
             gap: 8px;
           }
+          .other-teams-grid .team-card {
+            grid-template-columns: auto 1fr auto;
+            gap: 8px;
+          }
+          .leader-card {
+            transform: scale(1.02);
+            margin-bottom: 16px;
+          }
+          .leader-crown {
+            font-size: 1.5em;
+            top: -12px;
+          }
           .team-status-area {
             min-width: 100px;
           }
@@ -1909,15 +2006,19 @@ class HomeTriviaCard extends HTMLElement {
         
         /* Extra small screens - horizontal scroll for teams */
         @media (max-width: 320px) {
-          .teams-grid {
-            grid-template-columns: repeat(auto-fill, 240px);
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            padding-right: 16px;
+          .other-teams-grid {
+            gap: 8px;
           }
           .team-card {
             scroll-snap-align: start;
             min-width: 240px;
+          }
+          .other-teams-grid .team-card {
+            min-width: 240px;
+          }
+          .leader-card {
+            transform: scale(1.0);
+            margin-bottom: 12px;
           }
         }
       </style>
@@ -2071,8 +2172,6 @@ class HomeTriviaCard extends HTMLElement {
   }
 
   renderTeamsSection() {
-    let html = '<div class="teams-grid">';
-    
     // Check if timer is currently running to hide answer details
     const countdown = this._hass.states['sensor.home_trivia_countdown_current'];
     const isTimerRunning = countdown && countdown.attributes && countdown.attributes.is_running;
@@ -2101,14 +2200,75 @@ class HomeTriviaCard extends HTMLElement {
     
     // Sort teams by points in descending order for leaderboard ranking
     const sortedTeams = allTeams.sort((a, b) => b.points - a.points);
-    
-    // Render teams in rank order
-    sortedTeams.forEach((team, index) => {
-      const rank = index + 1;
+    const leader = sortedTeams.length > 0 ? sortedTeams[0] : null;
+    const otherTeams = sortedTeams.slice(1);
+
+    let html = '<div class="leaderboard-container">';
+
+    // Render the leader card
+    if (leader) {
+      const { team_number, name, points, answered, answer, last_round_answer, last_round_correct, last_round_points } = leader;
+      
+      let cardClasses = 'team-card leader-card rank-1 team-' + team_number;
+      if (isTimerRunning) {
+        cardClasses += answered ? ' team-card-answered-during-timer' : ' team-card-neutral';
+      } else {
+        cardClasses += ' team-card-results';
+      }
+
+      html += `
+        <div class="${cardClasses}">
+          <ha-icon class="leader-crown" icon="mdi:crown"></ha-icon>
+          <div class="team-rank">#1</div>
+          <ha-icon icon="mdi:medal-outline" class="team-medal"></ha-icon>
+          <div class="team-name">${name}</div>
+          <div class="team-points" id="team-points-${team_number}">${points} pts</div>
+          <div class="team-status-area">
+      `;
+      
+      if (isTimerRunning) {
+        html += `
+          <div class="team-answer-status">
+            ${answered ? this.t('answered') : this.t('notAnswered')}
+          </div>`;
+      } else {
+        if (answered && answer) {
+          html += `
+            <div class="team-current-answer">
+              ${this.t('answer')}: ${answer}
+            </div>`;
+        }
+        
+        if (last_round_answer) {
+          html += `
+            <div class="team-badges">
+              <div class="team-answer-badge ${last_round_correct ? 'badge-correct' : 'badge-incorrect'}">
+                ${last_round_answer}
+              </div>
+              <div class="team-points-badge ${last_round_correct ? 'badge-correct' : 'badge-incorrect'}">
+                +${last_round_points}pts
+              </div>
+            </div>`;
+        }
+      }
+      
+      html += `
+          </div>
+        </div>
+      `;
+    }
+
+    // Render the other teams
+    html += '<div class="other-teams-grid">';
+    otherTeams.forEach((team, index) => {
+      const rank = index + 2; // Rank starts from 2 for this list
       const { team_number, name, points, answered, answer, last_round_answer, last_round_correct, last_round_points } = team;
       
-      // Determine card state classes with rank-specific styling
-      let cardClasses = 'team-card';
+      // Calculate score percentage relative to leader for progress bar
+      const maxScore = leader ? leader.points : 1;
+      const scorePercentage = Math.max(5, (points / maxScore) * 100);
+      
+      let cardClasses = 'team-card team-' + team_number;
       if (rank <= 3) {
         cardClasses += ` rank-${rank}`;
       }
@@ -2120,16 +2280,22 @@ class HomeTriviaCard extends HTMLElement {
 
       // Determine which medal to show
       let medalIcon = '';
-      if (rank === 1) medalIcon = 'mdi:medal-outline';
       if (rank === 2) medalIcon = 'mdi:medal-outline';
       if (rank === 3) medalIcon = 'mdi:medal-outline';
       
       html += `
         <div class="${cardClasses}">
-          <div class="team-rank">#${rank}</div>
-          ${medalIcon ? `<ha-icon icon="${medalIcon}" class="team-medal"></ha-icon>` : '<div></div>'}
-          <div class="team-name">${name}</div>
-          <div class="team-points">${points} pts</div>
+          <div class="team-info">
+            <div class="team-rank">#${rank}</div>
+            ${medalIcon ? `<ha-icon icon="${medalIcon}" class="team-medal"></ha-icon>` : '<div></div>'}
+            <div class="team-name">${name}</div>
+          </div>
+          <div class="team-score-section">
+            <div class="team-points" id="team-points-${team_number}">${points} pts</div>
+            <div class="score-progress-bar">
+              <div class="score-progress-fill" style="width: ${scorePercentage}%;"></div>
+            </div>
+          </div>
           <div class="team-status-area">
       `;
       
@@ -2163,8 +2329,8 @@ class HomeTriviaCard extends HTMLElement {
           </div>
         </div>`;
     });
-    
-    html += '</div>';
+    html += '</div></div>';
+
     return html;
   }
 
