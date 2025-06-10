@@ -29,6 +29,10 @@ class HomeTriviaCard extends HTMLElement {
       teamUserIds: {}
     };
     
+    // Dropdown interaction lock to prevent re-renders during dropdown usage
+    this._dropdownInteractionLock = false;
+    this._dropdownLockTimer = null;
+    
     // Initialize translation system
     this.translations = {};
     this.currentLanguage = localStorage.getItem('home-trivia-language') || 'en';
@@ -211,12 +215,33 @@ class HomeTriviaCard extends HTMLElement {
 
   // Check if any form elements are currently focused
   isFormActivelyBeingEdited() {
+    // Check for dropdown interaction lock first
+    if (this._dropdownInteractionLock) {
+      return true;
+    }
+    
     const activeElement = this.shadowRoot.activeElement;
     return activeElement && (
       activeElement.tagName === 'INPUT' || 
       activeElement.tagName === 'SELECT' || 
       activeElement.tagName === 'TEXTAREA'
     );
+  }
+
+  // Set a temporary lock to prevent re-renders during dropdown interactions
+  setDropdownInteractionLock() {
+    this._dropdownInteractionLock = true;
+    
+    // Clear any existing timer
+    if (this._dropdownLockTimer) {
+      clearTimeout(this._dropdownLockTimer);
+    }
+    
+    // Set timer to release the lock after dropdown interaction should be complete
+    this._dropdownLockTimer = setTimeout(() => {
+      this._dropdownInteractionLock = false;
+      this._dropdownLockTimer = null;
+    }, 800); // 800ms should be enough for user to complete dropdown selection
   }
 
   // Check if significant game state has changed requiring a re-render
@@ -1096,6 +1121,9 @@ class HomeTriviaCard extends HTMLElement {
   }
 
   updateTeamUserId(teamId, userId) {
+    // Set dropdown interaction lock to prevent re-renders
+    this.setDropdownInteractionLock();
+    
     // Store pending value optimistically
     this._pendingFormValues.teamUserIds[teamId] = userId;
     
