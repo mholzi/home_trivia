@@ -1465,10 +1465,10 @@ class HomeTriviaCard extends HTMLElement {
           100% { box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4), 0 2px 16px rgba(220, 38, 38, 0.2); }
         }
         .warning-pulse {
-          animation: pulse-orange-shadow 1.2s infinite;
+          /* animation: pulse-orange-shadow 1.2s infinite; */
         }
         .time-up-pulse {
-          animation: pulse-red-shadow 1.2s infinite;
+          /* animation: pulse-red-shadow 1.2s infinite; */
         }
         .countdown-progress-container {
           margin: 10px auto 20px auto;
@@ -1512,10 +1512,10 @@ class HomeTriviaCard extends HTMLElement {
           100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 rgba(220, 38, 38, 0.8); }
         }
         .warning-pulse {
-          animation: pulse-orange-shadow 1.2s ease-in-out infinite;
+          /* animation: pulse-orange-shadow 1.2s ease-in-out infinite; */
         }
         .time-up-pulse {
-          animation: pulse-red-shadow 1.2s ease-in-out infinite;
+          /* animation: pulse-red-shadow 1.2s ease-in-out infinite; */
         }
         @keyframes score-update-flash {
           0% { background-color: #dbeafe; }
