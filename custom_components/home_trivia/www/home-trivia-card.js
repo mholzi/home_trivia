@@ -415,18 +415,37 @@ class HomeTriviaCard extends HTMLElement {
         
         .splash-title {
           font-size: 3em;
-          font-weight: 800;
+          font-weight: 900;
           margin-bottom: 16px;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          text-shadow: 
+            0 2px 8px rgba(0,0,0,0.3),
+            0 4px 16px rgba(0,0,0,0.2),
+            0 0 40px rgba(255,255,255,0.1);
           letter-spacing: 1px;
-          color: white;
+          background: linear-gradient(45deg, #ffffff 20%, #f8fafc 40%, #ffffff 60%, #e2e8f0 80%);
+          background-size: 300% 300%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: splashTitleGlow 5s ease-in-out infinite;
+        }
+        @keyframes splashTitleGlow {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
         
         .splash-subtitle {
           font-size: 1.2em;
           margin-bottom: 20px;
-          opacity: 0.9;
-          font-weight: 500;
+          opacity: 0.95;
+          font-weight: 600;
+          color: white;
+          text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+          animation: subtitlePulse 3s ease-in-out infinite;
+        }
+        @keyframes subtitlePulse {
+          0%, 100% { opacity: 0.95; }
+          50% { opacity: 1; }
         }
         
         .splash-sound-waves {
@@ -1314,36 +1333,123 @@ class HomeTriviaCard extends HTMLElement {
           overflow: hidden;
         }
         .game-header {
-          background: #2563eb;
+          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 25%, #2563eb 75%, #1d4ed8 100%);
           color: white;
-          padding: 32px 24px;
+          padding: 40px 24px;
           text-align: center;
           position: relative;
+          overflow: hidden;
+          box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
         }
         .game-header::before {
           content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(255, 255, 255, 0.05);
-          opacity: 0.8;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: 
+            radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+          animation: headerShimmer 6s ease-in-out infinite;
+        }
+        @keyframes headerShimmer {
+          0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+          50% { transform: translate(-50%, -50%) rotate(180deg); }
         }
         .game-title {
-          font-size: 2.2em;
-          font-weight: 800;
-          margin-bottom: 12px;
+          font-size: 2.8em;
+          font-weight: 900;
+          margin-bottom: 16px;
           position: relative;
+          z-index: 2;
+          text-shadow: 
+            0 2px 4px rgba(0,0,0,0.3),
+            0 4px 8px rgba(0,0,0,0.2),
+            0 0 40px rgba(255,255,255,0.1);
+          letter-spacing: 1px;
+          background: linear-gradient(45deg, #ffffff 30%, #f1f5f9 50%, #ffffff 70%);
+          background-size: 200% 200%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: titleGlow 4s ease-in-out infinite;
+        }
+        @keyframes titleGlow {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        .header-decorations {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
           z-index: 1;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .header-particle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.6);
+          border-radius: 50%;
+          animation: particleFloat 8s linear infinite;
+        }
+        .header-particle:nth-child(1) {
+          left: 10%;
+          animation-delay: 0s;
+          animation-duration: 8s;
+        }
+        .header-particle:nth-child(2) {
+          left: 25%;
+          animation-delay: 2s;
+          animation-duration: 12s;
+        }
+        .header-particle:nth-child(3) {
+          left: 50%;
+          animation-delay: 4s;
+          animation-duration: 10s;
+        }
+        .header-particle:nth-child(4) {
+          left: 75%;
+          animation-delay: 6s;
+          animation-duration: 14s;
+        }
+        .header-particle:nth-child(5) {
+          left: 90%;
+          animation-delay: 1s;
+          animation-duration: 9s;
+        }
+        @keyframes particleFloat {
+          0% {
+            transform: translateY(100px) scale(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-100px) scale(1);
+            opacity: 0;
+          }
         }
         .game-status {
-          font-size: 1.3em;
+          font-size: 1.4em;
           opacity: 0.95;
           position: relative;
-          z-index: 1;
-          font-weight: 500;
+          z-index: 2;
+          font-weight: 600;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          background: rgba(255, 255, 255, 0.1);
+          padding: 8px 20px;
+          border-radius: 25px;
+          display: inline-block;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
         }
         .game-content {
           padding: 32px 24px;
@@ -2008,10 +2114,10 @@ class HomeTriviaCard extends HTMLElement {
         /* Enhanced Mobile Responsiveness */
         @media (max-width: 480px) {
           .game-header {
-            padding: 24px 16px;
+            padding: 32px 16px;
           }
           .game-title {
-            font-size: 1.8em;
+            font-size: 2.2em;
           }
           .game-content {
             padding: 24px 16px;
@@ -2091,6 +2197,13 @@ class HomeTriviaCard extends HTMLElement {
       
       <div class="${containerClasses}">
         <div class="game-header">
+          <div class="header-decorations">
+            <div class="header-particle"></div>
+            <div class="header-particle"></div>
+            <div class="header-particle"></div>
+            <div class="header-particle"></div>
+            <div class="header-particle"></div>
+          </div>
           <div class="game-title">${this.t('gameTitle')}</div>
           <div class="game-status">${gameStatus ? gameStatus.state : this.t('loading_')}</div>
         </div>
@@ -2180,15 +2293,31 @@ class HomeTriviaCard extends HTMLElement {
         }
 
         .summary-header h1 {
-          font-size: 2.5rem;
+          font-size: 2.8rem;
           margin: 0;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+          text-shadow: 
+            2px 2px 4px rgba(0,0,0,0.4),
+            0 4px 8px rgba(0,0,0,0.3),
+            0 0 30px rgba(255,255,255,0.1);
+          font-weight: 900;
+          background: linear-gradient(45deg, #ffffff 30%, #f0f9ff 50%, #ffffff 70%);
+          background-size: 200% 200%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: summaryTitleGlow 3s ease-in-out infinite;
+        }
+        @keyframes summaryTitleGlow {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
 
         .summary-header p {
-          font-size: 1.2rem;
+          font-size: 1.3rem;
           margin: 8px 0;
-          opacity: 0.9;
+          opacity: 0.95;
+          font-weight: 600;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .winner-section {
