@@ -114,14 +114,6 @@ async def _process_round_scoring(entities: dict) -> None:
     
     _LOGGER.info("Processing round scoring for question: %s", current_question.get("question", "Unknown"))
     
-    # Get remaining time for speed bonus calculation
-    countdown_current_sensor = entities.get("countdown_current_sensor")
-    remaining_time = 0
-    if countdown_current_sensor and hasattr(countdown_current_sensor, '_current_time'):
-        remaining_time = max(0, countdown_current_sensor._current_time)
-    
-    _LOGGER.debug("Speed bonus time remaining: %d seconds", remaining_time)
-    
     # Get team sensors and main sensor for team count
     team_sensors = entities.get("team_sensors", {})
     main_sensor = entities.get("main_sensor")
@@ -145,9 +137,11 @@ async def _process_round_scoring(entities: dict) -> None:
             _LOGGER.debug("Team %d not participating, skipping", i)
             continue
         
-        # Get team's answer
+        # Get team's answer and time when they answered
         team_answer = getattr(team_sensor, '_answer', None)
-        _LOGGER.debug("Team %d answer: %s, correct: %s", i, team_answer, correct_answer)
+        answer_time_remaining = getattr(team_sensor, '_answer_time_remaining', 0)
+        _LOGGER.debug("Team %d answer: %s, correct: %s, answered with %d seconds remaining", 
+                     i, team_answer, correct_answer, answer_time_remaining)
         
         # Calculate points
         points_earned = 0
@@ -155,7 +149,7 @@ async def _process_round_scoring(entities: dict) -> None:
         
         if team_answer and team_answer.upper() == correct_answer.upper():
             is_correct = True
-            points_earned = 10 + remaining_time  # 10 base points + speed bonus
+            points_earned = 10 + answer_time_remaining  # 10 base points + speed bonus from when they answered
             
             # Streak bonus logic
             if hasattr(team_sensor, 'increment_streak'):
@@ -167,7 +161,7 @@ async def _process_round_scoring(entities: dict) -> None:
                     _LOGGER.info("Team %d hit a %dx streak! Awarding %d bonus points.", i, new_streak, streak_bonus)
             
             _LOGGER.info("Team %d answered correctly! Earned %d points (10 base + %d speed bonus)", 
-                        i, points_earned, remaining_time)
+                        i, points_earned, answer_time_remaining)
             
             # Update user stats for MVP calculation
             user_id = getattr(team_sensor, '_user_id', None)
@@ -199,6 +193,10 @@ async def _process_round_scoring(entities: dict) -> None:
             team_sensor.update_team_answer(None)
         if hasattr(team_sensor, 'update_team_answered'):
             team_sensor.update_team_answered(False)
+        # Reset answer time for next round
+        if hasattr(team_sensor, '_answer_time_remaining'):
+            team_sensor._answer_time_remaining = 0
+            team_sensor.async_write_ha_state()
     
     # Increment round counter
     round_counter_sensor = entities.get("round_counter_sensor")
@@ -395,12 +393,28 @@ async def _register_services(hass: HomeAssistant) -> None:
         participating = call.data.get("participating")
         team_sensor.update_team_participating(bool(participating))
 
-    @team_service_handler("update_team_answer", ["team_id", "answer"], _fallback_team_answer)
+    @team_service_handler("update_team_answer_with_time", ["team_id", "answer"], _fallback_team_answer)
     async def update_team_answer(call, team_sensor):
         """Handle the update_team_answer service call."""
         answer = call.data.get("answer")
-        team_sensor.update_team_answer(answer)
+        
+        # Get current timer state to capture speed bonus time
+        entities = _get_entities()
+        countdown_current_sensor = entities.get("countdown_current_sensor")
+        time_remaining = 0
+        if countdown_current_sensor and hasattr(countdown_current_sensor, '_current_time'):
+            time_remaining = max(0, countdown_current_sensor._current_time)
+        
+        # Update team answer with time remaining when answered
+        if hasattr(team_sensor, 'update_team_answer_with_time'):
+            team_sensor.update_team_answer_with_time(answer, time_remaining)
+        else:
+            # Fallback to regular answer update
+            team_sensor.update_team_answer(answer)
+        
         team_sensor.update_team_answered(True)
+        
+        _LOGGER.debug("Team answered %s with %d seconds remaining", answer, time_remaining)
 
     @team_service_handler("update_team_user_id", ["team_id"], _fallback_team_user_id)
     async def update_team_user_id(call, team_sensor):
@@ -647,6 +661,9 @@ class GameManager:
                     team_sensor.update_team_answer(None)
                 if hasattr(team_sensor, 'update_team_answered'):
                     team_sensor.update_team_answered(False)
+                if hasattr(team_sensor, '_answer_time_remaining'):
+                    team_sensor._answer_time_remaining = 0
+                    team_sensor.async_write_ha_state()
                 if hasattr(team_sensor, '_last_round_answer'):
                     team_sensor._last_round_answer = None
                     team_sensor.async_write_ha_state()
@@ -675,6 +692,9 @@ class GameManager:
                     team_sensor.update_team_answer(None)
                 if hasattr(team_sensor, 'update_team_answered'):
                     team_sensor.update_team_answered(False)
+                if hasattr(team_sensor, '_answer_time_remaining'):
+                    team_sensor._answer_time_remaining = 0
+                    team_sensor.async_write_ha_state()
                 if hasattr(team_sensor, '_last_round_answer'):
                     team_sensor._last_round_answer = None
                     team_sensor.async_write_ha_state()
@@ -690,6 +710,10 @@ class GameManager:
             if team_sensor and hasattr(team_sensor, 'update_team_answer') and hasattr(team_sensor, 'update_team_answered'):
                 team_sensor.update_team_answer(None)
                 team_sensor.update_team_answered(False)
+                # Reset answer time for next question
+                if hasattr(team_sensor, '_answer_time_remaining'):
+                    team_sensor._answer_time_remaining = 0
+                    team_sensor.async_write_ha_state()
                 _LOGGER.debug("Reset answer for %s", team_key)
     
     async def _load_next_question(self, entities: dict):
