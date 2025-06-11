@@ -174,6 +174,9 @@ class HomeTriviaCard extends HTMLElement {
           }
         }
       }
+      
+      // Handle countdown timer display updates without full re-render
+      this.updateCountdownDisplay(previousHass, hass);
     }
     // --- End of new/modified code ---
     
@@ -228,6 +231,55 @@ class HomeTriviaCard extends HTMLElement {
       activeElement.tagName === 'SELECT' || 
       activeElement.tagName === 'TEXTAREA'
     );
+  }
+
+  // Update countdown display without triggering full re-render
+  updateCountdownDisplay(previousHass, currentHass) {
+    if (!previousHass || !currentHass) return;
+    
+    const prevCountdown = previousHass.states['sensor.home_trivia_countdown_current'];
+    const currentCountdown = currentHass.states['sensor.home_trivia_countdown_current'];
+    
+    // Only update if countdown state exists and has changed
+    if (!prevCountdown || !currentCountdown) return;
+    if (prevCountdown.state === currentCountdown.state) return;
+    
+    // Find the countdown timer display element
+    const timerDisplay = this.shadowRoot?.querySelector('#countdown-timer-display');
+    const progressFill = this.shadowRoot?.querySelector('.countdown-progress-fill');
+    
+    if (!timerDisplay) return; // Element not rendered yet
+    
+    // Update timer display
+    const timeLeft = parseInt(currentCountdown.state);
+    const isRunning = currentCountdown.attributes.is_running;
+    const isTimeUp = timeLeft <= 0;
+    
+    // Get timer length for progress bar calculation
+    const initialTime = currentCountdown.attributes.initial_time;
+    const timerSensor = currentHass.states['sensor.home_trivia_countdown_timer'];
+    const timerLength = initialTime || parseInt(timerSensor?.state || '30');
+    
+    // Update timer text and classes
+    let timerClasses = 'countdown-timer';
+    let timerText = `${timeLeft}s`;
+    
+    if (isTimeUp) {
+      timerClasses += ' time-up';
+      timerText = this.t('timeUp');
+    } else if (timeLeft <= 5 && isRunning) {
+      timerClasses += ' warning';
+    }
+    
+    timerDisplay.className = timerClasses;
+    timerDisplay.textContent = timerText;
+    
+    // Update progress bar
+    if (progressFill) {
+      const progressPercentage = isRunning && timerLength > 0 ? 
+        Math.max(0, Math.min(100, (timeLeft / timerLength) * 100)) : 0;
+      progressFill.style.width = `${progressPercentage}%`;
+    }
   }
 
   // Set a temporary lock to prevent re-renders during dropdown interactions
@@ -300,8 +352,8 @@ class HomeTriviaCard extends HTMLElement {
           for (const attr of timerAttrs) {
             if (prevAttrs[attr] !== currentAttrs[attr]) return true;
           }
-          // Check if timer value changed at all (for live countdown updates)
-          if (prevState.state !== currentState.state) return true;
+          // Only trigger re-render for significant countdown changes (not every second tick)
+          // We handle timer display updates separately to avoid re-rendering answer buttons
         }
       }
     }
