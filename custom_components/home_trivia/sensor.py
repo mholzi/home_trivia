@@ -199,6 +199,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
         self._participating = True
         self._answer = None  # A, B, or C
         self._answered = False
+        self._answer_time_remaining = 0  # Time remaining when answer was submitted
         self._last_round_answer = None
         self._last_round_correct = False
         self._last_round_points = 0
@@ -219,6 +220,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
                 self._participating = bool(last_state.attributes.get("participating", True))
                 self._answer = last_state.attributes.get("answer")
                 self._answered = bool(last_state.attributes.get("answered", False))
+                self._answer_time_remaining = int(last_state.attributes.get("answer_time_remaining", 0))
                 self._last_round_answer = last_state.attributes.get("last_round_answer")
                 self._last_round_correct = bool(last_state.attributes.get("last_round_correct", False))
                 self._last_round_points = int(last_state.attributes.get("last_round_points", 0))
@@ -246,6 +248,7 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
             "participating": self._participating,
             "answer": self._answer,
             "answered": self._answered,
+            "answer_time_remaining": self._answer_time_remaining,
             "last_round_answer": self._last_round_answer,
             "last_round_correct": self._last_round_correct,
             "last_round_points": self._last_round_points,
@@ -272,6 +275,12 @@ class HomeTriviaTeamSensor(HomeTriviaBaseSensor):
     def update_team_answer(self, answer: str | None) -> None:
         """Update the team's answer choice."""
         self._answer = answer
+        self.async_write_ha_state()
+
+    def update_team_answer_with_time(self, answer: str | None, time_remaining: int) -> None:
+        """Update the team's answer choice and capture time remaining when answered."""
+        self._answer = answer
+        self._answer_time_remaining = time_remaining
         self.async_write_ha_state()
 
     def update_team_answered(self, answered: bool) -> None:
