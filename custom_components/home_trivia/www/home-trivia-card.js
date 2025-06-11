@@ -135,6 +135,8 @@ class HomeTriviaCard extends HTMLElement {
       throw new Error('Invalid configuration');
     }
     this.config = config;
+    // Check if tablet mode is enabled in config
+    this.tabletMode = config.tablet_mode || false;
     this.render();
   }
 
@@ -298,9 +300,8 @@ class HomeTriviaCard extends HTMLElement {
           for (const attr of timerAttrs) {
             if (prevAttrs[attr] !== currentAttrs[attr]) return true;
           }
-          // Also check if time has decreased significantly (more than 2 seconds)
-          const timeDiff = Math.abs((prevState.state || 0) - (currentState.state || 0));
-          if (timeDiff >= 2) return true;
+          // Check if timer value changed at all (for live countdown updates)
+          if (prevState.state !== currentState.state) return true;
         }
       }
     }
@@ -382,6 +383,8 @@ class HomeTriviaCard extends HTMLElement {
       this.renderSummaryScreen();
     } else if (this.shouldShowSplashScreen()) {
       this.renderSplashScreen();
+    } else if (this.tabletMode) {
+      this.renderTabletScreen();
     } else {
       this.renderMainGame();
     }
@@ -2941,6 +2944,373 @@ class HomeTriviaCard extends HTMLElement {
     // Start a completely new game which resets everything including team setup
     await this._hass.callService('home_trivia', 'start_game', {});
     // This will reset all team names to defaults and show the splash screen for setup
+  }
+
+  renderTabletScreen() {
+    const gameStatus = this._hass.states['sensor.home_trivia_game_status'];
+    const currentQuestion = this._hass.states['sensor.home_trivia_current_question'];
+    const countdown = this._hass.states['sensor.home_trivia_countdown_current'];
+    const currentRound = gameStatus?.attributes?.current_round || 1;
+    
+    // Determine if we should show summary or bar chart
+    // Show summary at round start/between questions, bar chart during active rounds
+    const isActiveRound = currentQuestion && currentQuestion.attributes.question;
+    const showBarChart = isActiveRound && currentRound > 1;
+    
+    this.shadowRoot.innerHTML = `
+      <style>
+        .tablet-container {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+          background: var(--ha-card-background, var(--card-background-color, white));
+          border-radius: var(--ha-card-border-radius, 16px);
+          border: none;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+          overflow: hidden;
+          display: flex;
+          height: 100vh;
+          max-height: 800px;
+        }
+        
+        .tablet-left {
+          flex: 1;
+          padding: 32px;
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+          color: white;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+        }
+        
+        .tablet-right {
+          flex: 1;
+          padding: 32px;
+          background: var(--ha-card-background, white);
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .tablet-timer {
+          font-size: 8rem;
+          font-weight: 800;
+          margin-bottom: 24px;
+          text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+          line-height: 1;
+        }
+        
+        .tablet-timer.warning {
+          color: #fbbf24;
+          animation: warning-pulse 1s infinite;
+        }
+        
+        .tablet-timer.time-up {
+          color: #dc2626;
+          animation: danger-pulse 0.5s infinite;
+        }
+        
+        @keyframes warning-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        
+        @keyframes danger-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        .tablet-progress {
+          width: 100%;
+          height: 20px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 10px;
+          overflow: hidden;
+          margin-bottom: 24px;
+        }
+        
+        .tablet-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10b981, #059669);
+          border-radius: 10px;
+          transition: width 0.3s ease;
+        }
+        
+        .tablet-progress-fill.warning {
+          background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        
+        .tablet-progress-fill.danger {
+          background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        
+        .tablet-question-info {
+          opacity: 0.9;
+        }
+        
+        .tablet-question-category {
+          font-size: 1.2rem;
+          margin-bottom: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        
+        .tablet-round-info {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-bottom: 16px;
+        }
+        
+        .tablet-ranking-header {
+          font-size: 2rem;
+          font-weight: 800;
+          margin-bottom: 24px;
+          text-align: center;
+          color: var(--primary-text-color);
+        }
+        
+        .tablet-ranking-content {
+          flex: 1;
+          overflow-y: auto;
+        }
+        
+        /* Bar chart styles */
+        .bar-chart {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding: 20px 0;
+        }
+        
+        .bar-item {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        
+        .bar-label {
+          min-width: 120px;
+          font-weight: 600;
+          font-size: 1.1rem;
+        }
+        
+        .bar-container {
+          flex: 1;
+          height: 40px;
+          background: #f1f5f9;
+          border-radius: 20px;
+          overflow: hidden;
+          position: relative;
+        }
+        
+        .bar-fill {
+          height: 100%;
+          border-radius: 20px;
+          transition: width 2s ease;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 12px;
+          color: white;
+          font-weight: bold;
+        }
+        
+        .bar-fill.team-1 { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+        .bar-fill.team-2 { background: linear-gradient(90deg, #10b981, #059669); }
+        .bar-fill.team-3 { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .bar-fill.team-4 { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .bar-fill.team-5 { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+        
+        .bar-points {
+          font-size: 0.9rem;
+          white-space: nowrap;
+        }
+        
+        /* Summary styles (reuse from main summary screen) */
+        .summary-rankings {
+          background: rgba(0,0,0,0.02);
+          border-radius: 12px;
+          padding: 20px;
+          margin: 20px 0;
+        }
+        
+        .summary-ranking-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          margin: 8px 0;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .summary-rank {
+          font-size: 1.2rem;
+          font-weight: bold;
+          width: 40px;
+          color: #2563eb;
+        }
+        
+        .summary-name {
+          font-size: 1.1rem;
+          font-weight: 600;
+          flex-grow: 1;
+          margin-left: 12px;
+        }
+        
+        .summary-points {
+          font-size: 1.1rem;
+          font-weight: bold;
+          color: #059669;
+        }
+      </style>
+      
+      <div class="tablet-container">
+        <div class="tablet-left">
+          ${this.renderTabletTimer(countdown, currentQuestion)}
+        </div>
+        <div class="tablet-right">
+          <div class="tablet-ranking-header">
+            ${showBarChart ? '📊 Live Rankings' : '🏆 Current Standings'}
+          </div>
+          <div class="tablet-ranking-content">
+            ${showBarChart ? this.renderBarChart() : this.renderTabletSummary()}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  renderTabletTimer(countdown, currentQuestion) {
+    const timeLeft = countdown ? countdown.state : 0;
+    const isRunning = countdown ? countdown.attributes.is_running : false;
+    const isTimeUp = timeLeft <= 0;
+    
+    // Get timer length for progress bar calculation
+    const initialTime = countdown?.attributes?.initial_time;
+    const timerSensor = this._hass?.states['sensor.home_trivia_countdown_timer'];
+    const timerLength = initialTime || parseInt(timerSensor?.state || '30');
+    
+    // Calculate progress percentage
+    const progressPercentage = isRunning && timerLength > 0 ? 
+      Math.max(0, Math.min(100, (timeLeft / timerLength) * 100)) : 0;
+    
+    // Determine timer classes
+    let timerClasses = 'tablet-timer';
+    let progressClasses = 'tablet-progress-fill';
+    let timerText = isTimeUp ? 'TIME UP!' : `${timeLeft}`;
+    
+    if (isTimeUp) {
+      timerClasses += ' time-up';
+      progressClasses += ' danger';
+    } else if (timeLeft <= 5 && isRunning) {
+      timerClasses += ' warning';
+      progressClasses += ' warning';
+    }
+    
+    const gameStatus = this._hass.states['sensor.home_trivia_game_status'];
+    const currentRound = gameStatus?.attributes?.current_round || 1;
+    
+    return `
+      <div class="tablet-round-info">Round ${currentRound}</div>
+      <div class="${timerClasses}">${timerText}</div>
+      <div class="tablet-progress">
+        <div class="${progressClasses}" style="width: ${progressPercentage}%"></div>
+      </div>
+      ${currentQuestion && currentQuestion.attributes.question ? `
+        <div class="tablet-question-info">
+          <div class="tablet-question-category">
+            <ha-icon icon="${this.getCategoryIcon(currentQuestion.attributes.category)}"></ha-icon>
+            <span>${currentQuestion.attributes.category}</span>
+          </div>
+        </div>
+      ` : `
+        <div class="tablet-question-info">
+          <div>Ready for next question</div>
+        </div>
+      `}
+    `;
+  }
+  
+  renderTabletSummary() {
+    const teams = this.getTeams();
+    const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
+    const currentTeamCount = gameStatus?.attributes?.team_count || 2;
+    
+    // Get participating teams and sort by points
+    const participatingTeams = [];
+    for (let i = 1; i <= currentTeamCount; i++) {
+      const teamState = this._hass.states[`sensor.home_trivia_team_${i}`];
+      if (teamState && teamState.attributes.participating) {
+        participatingTeams.push({
+          team_number: i,
+          name: teamState.attributes.name || `Team ${i}`,
+          points: teamState.attributes.points || 0,
+          last_round_points: teamState.attributes.last_round_points || 0
+        });
+      }
+    }
+    
+    const sortedTeams = participatingTeams.sort((a, b) => b.points - a.points);
+    
+    return `
+      <div class="summary-rankings">
+        ${sortedTeams.map((team, index) => `
+          <div class="summary-ranking-item">
+            <div class="summary-rank">#${index + 1}</div>
+            <div class="summary-name">${this.escapeHtml(team.name)}</div>
+            <div class="summary-points">${team.points} pts</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  renderBarChart() {
+    const gameStatus = this._hass?.states['sensor.home_trivia_game_status'];
+    const currentTeamCount = gameStatus?.attributes?.team_count || 2;
+    
+    // Get participating teams
+    const participatingTeams = [];
+    let maxPoints = 1; // Minimum for percentage calculation
+    
+    for (let i = 1; i <= currentTeamCount; i++) {
+      const teamState = this._hass.states[`sensor.home_trivia_team_${i}`];
+      if (teamState && teamState.attributes.participating) {
+        const points = teamState.attributes.points || 0;
+        maxPoints = Math.max(maxPoints, points);
+        participatingTeams.push({
+          team_number: i,
+          name: teamState.attributes.name || `Team ${i}`,
+          points: points,
+          last_round_points: teamState.attributes.last_round_points || 0
+        });
+      }
+    }
+    
+    // Sort by points descending
+    const sortedTeams = participatingTeams.sort((a, b) => b.points - a.points);
+    
+    return `
+      <div class="bar-chart">
+        ${sortedTeams.map(team => {
+          const percentage = (team.points / maxPoints) * 100;
+          return `
+            <div class="bar-item">
+              <div class="bar-label">${this.escapeHtml(team.name)}</div>
+              <div class="bar-container">
+                <div class="bar-fill team-${team.team_number}" style="width: ${percentage}%">
+                  <span class="bar-points">${team.points}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   getCardSize() {

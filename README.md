@@ -82,6 +82,7 @@ This means you can configure your entire trivia game setup smoothly in one sessi
 - **Visual timer feedback** - Progress bar and timer change colors and animations when time runs out
 - Real-time game status updates
 - **Team 1 Owner Game Settings** - Dedicated settings panel for timer controls and game management (visible only to Team 1 owner)
+- **Tablet Mode** - Dedicated split-screen layout with large timer and dynamic rankings for tablet displays
 
 ## 🚀 Quick Start
 
@@ -202,6 +203,29 @@ The Game Settings section provides streamlined game management tools while keepi
 - **Timer Range**: 10 to 120 seconds per question
 - **Automatic Countdown**: Timer decrements live every second with visual feedback
 - **Team Customization**: Custom or default names and participation status
+- **Tablet Mode**: Dedicated full-screen layout optimized for tablets
+
+### 📱 Tablet Mode (New!)
+Home Trivia now includes a dedicated **tablet screen mode** perfect for large displays and dedicated game screens:
+
+```yaml
+type: custom:home-trivia-card
+tablet_mode: true
+```
+
+**Tablet Mode Features:**
+- **Split-Screen Layout**: Timer on left, rankings on right
+- **Large Timer Display**: Giant countdown with progress bar and round info
+- **Dynamic Rankings**: Smart switching between summary and bar chart views
+- **Live Updates**: Timer updates every second with smooth animations
+- **Visual Feedback**: Color-coded warnings and progress indicators
+
+**Ranking Display Modes:**
+- **Summary View**: Clean team standings list (shown initially and between rounds)
+- **Bar Chart View**: Animated horizontal bars showing point progression (shown during active rounds after round 1)
+- **Automatic Switching**: Seamlessly transitions between views based on game state
+
+Perfect for dedicated game rooms, large tablets, or secondary displays!
 
 ### 🔥 Live Timer Features
 The countdown timer now works **automatically** with no setup required:
