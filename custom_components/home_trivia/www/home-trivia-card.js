@@ -3192,11 +3192,22 @@ class HomeTriviaCard extends HTMLElement {
         }
         
         .tablet-ranking-header {
-          font-size: 2rem;
-          font-weight: 800;
+          font-size: 2.2rem;
+          font-weight: 900;
           margin-bottom: 24px;
           text-align: center;
           color: var(--primary-text-color);
+          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          background: linear-gradient(45deg, #1e293b 20%, #475569 50%, #1e293b 80%);
+          background-size: 200% 200%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: tabletHeaderGlow 4s ease-in-out infinite;
+        }
+        @keyframes tabletHeaderGlow {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
         
         .tablet-ranking-content {
